@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Detailed Crop Identification Result</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2e3130",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#88d982",
+                        "on-secondary-fixed": "#002107",
+                        "on-primary-fixed": "#002204",
+                        "on-primary-container": "#cbffc2",
+                        "on-surface-variant": "#40493d",
+                        "on-tertiary-fixed-variant": "#42493e",
+                        "on-primary-fixed-variant": "#005312",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f2",
+                        "on-secondary-container": "#2e7238",
+                        "tertiary-fixed-dim": "#c2c9bb",
+                        "inverse-on-surface": "#eff1ef",
+                        "tertiary-fixed": "#dee5d6",
+                        "secondary-container": "#abf4ac",
+                        "on-background": "#191c1b",
+                        "on-surface": "#191c1b",
+                        "on-secondary-fixed-variant": "#07521d",
+                        "primary": "#0d631b",
+                        "background": "#f8faf8",
+                        "surface-container-high": "#e6e9e7",
+                        "secondary": "#286b33",
+                        "surface-container": "#eceeec",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#abf4ac",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2e7d32",
+                        "outline-variant": "#bfcaba",
+                        "outline": "#707a6c",
+                        "surface-variant": "#e1e3e1",
+                        "secondary-fixed-dim": "#90d792",
+                        "on-tertiary-container": "#edf4e5",
+                        "tertiary-container": "#697064",
+                        "surface": "#f8faf8",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#a3f69c",
+                        "surface-container-highest": "#e1e3e1",
+                        "inverse-primary": "#88d982",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f8faf8",
+                        "tertiary": "#51584c",
+                        "surface-dim": "#d8dad9",
+                        "surface-tint": "#1b6d24",
+                        "on-tertiary-fixed": "#171d14"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "24px",
+                        "gutter": "16px",
+                        "container-max": "640px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    },
+                    "animation": {
+                        "scan": "scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+                        "fade-in": "fadeIn 0.5s ease-out forwards",
+                    },
+                    "keyframes": {
+                        scan: {
+                            "0%, 100%": { top: "0%" },
+                            "50%": { top: "100%" },
+                        },
+                        fadeIn: {
+                            "0%": { opacity: 0 },
+                            "100%": { opacity: 1 },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Hide scrollbar for smooth gallery scrolling */
+        .snap-x::-webkit-scrollbar {
+            display: none;
+        }
+        .snap-x {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased md:pl-64 pb-20 md:pb-0 pt-16 md:pt-0">
+
+    <!-- STATE 1: FULLSCREEN SCANNING OVERLAY (Hidden after scanning) -->
+    <div id="scanning-overlay" class="fixed inset-0 z-[100] bg-surface flex flex-col items-center justify-center p-margin gap-8">
+        <div class="relative w-64 h-64 rounded-2xl overflow-hidden shadow-lg border-4 border-surface-container-highest">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAchDFuFABEN02-HyPwTVNFoTYnl0QSqcOsy3EPg2PeQt-NcUeOG7Zqciis-sQ8LJnT6l-o-s0z2yoz0vVxvSBy03YGiFwPOvOU1XX6cnMT4eVu5rkrnyJ8QO3qJINQLghs2kR6ISeGadhJnudji5JZF26zXrJCO27hdGu8gmF21GE_at1EAJqBqlsBDNjJHiOw9tZJzMw5w8ISOqcDfLZu-NA3JG-L-sJSbYEGBwFnfyUYaoePuA26DiSZPAH-tfMwK2Mr8dWA88gP" alt="Scanning Plant" class="w-full h-full object-cover filter brightness-75" />
+            
+            <div class="absolute inset-0 z-10 pointer-events-none">
+                <div class="absolute w-full h-1 bg-primary-fixed shadow-[0_0_15px_5px_rgba(136,217,130,0.5)] animate-scan"></div>
+            </div>
+
+            <div class="absolute top-4 left-4 w-6 h-6 border-t-4 border-l-4 border-primary rounded-tl-lg"></div>
+            <div class="absolute top-4 right-4 w-6 h-6 border-t-4 border-r-4 border-primary rounded-tr-lg"></div>
+            <div class="absolute bottom-4 left-4 w-6 h-6 border-b-4 border-l-4 border-primary rounded-bl-lg"></div>
+            <div class="absolute bottom-4 right-4 w-6 h-6 border-b-4 border-r-4 border-primary rounded-br-lg"></div>
+        </div>
+        
+        <div class="flex flex-col items-center gap-2">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary animate-spin">eco</span>
+                <h2 class="font-headline-lg text-headline-lg text-on-surface">Đang phân tích giống cây...</h2>
+            </div>
+            <p class="font-body-md text-body-md text-on-surface-variant text-center max-w-[280px]">
+                Hệ thống AI đang đối chiếu hình ảnh với cơ sở dữ liệu thực vật AgriSocial.
+            </p>
+            <div class="w-48 h-1.5 bg-surface-container-high rounded-full mt-4 overflow-hidden">
+                <div class="h-full bg-primary rounded-full w-1/2 transition-all duration-1000 ease-in-out" id="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATE 2: RESULT CONTENT (Hidden initially) -->
+    <div id="result-content" class="opacity-0 hidden transition-opacity duration-500">
+        <!-- TopAppBar (Mobile & Nav Context) -->
+        <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface shadow-sm md:hidden">
+            <div class="flex items-center gap-2 text-primary">
+                <button class="p-2 cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors" onclick="window.location.reload()">
+                    <span class="material-symbols-outlined font-headline-md">arrow_back</span>
+                </button>
+                <span class="font-headline-lg text-headline-lg font-bold">Kết Quả AI</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="p-2 cursor-pointer active:scale-95 text-primary hover:bg-surface-container-low transition-colors rounded-full">
+                    <span class="material-symbols-outlined font-headline-md">bookmark_add</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- SideNavBar (Desktop) -->
+        <nav class="bg-surface-container-low h-screen w-64 hidden md:flex flex-col fixed left-0 top-0 h-full p-4 flex flex-col gap-2 z-40">
+            <div class="mb-8 px-4 py-2">
+                <span class="font-headline-md text-headline-md font-bold text-primary">AgriSocial</span>
+                <p class="font-label-md text-label-md text-on-surface-variant">Hệ Sinh Thái Nông Nghiệp</p>
+            </div>
+            <button class="mb-6 bg-primary text-on-primary font-label-lg text-label-lg py-3 rounded-xl hover:bg-surface-tint transition-colors w-full text-center shadow-sm">
+                Quét Cây Mới
+            </button>
+            <div class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-98" href="#">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="font-label-lg text-label-lg">Bảng tin</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-98" href="#">
+                    <span class="material-symbols-outlined">library_books</span>
+                    <span class="font-label-lg text-label-lg">Cẩm nang</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container font-bold transition-all active:scale-98" href="#">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">eco</span>
+                    <span class="font-label-lg text-label-lg">Nhận diện AI</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-98" href="#">
+                    <span class="material-symbols-outlined">psychology</span>
+                    <span class="font-label-lg text-label-lg">Hỏi Chuyên Gia</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-98" href="#">
+                    <span class="material-symbols-outlined">local_florist</span>
+                    <span class="font-label-lg text-label-lg">Vườn của tôi</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="max-w-container-max mx-auto p-4 md:p-margin flex flex-col gap-6 animate-fade-in relative z-10">
+            <!-- Confidence Badge Overlaid slightly negative margin to break layout creatively -->
+            <div class="flex justify-between items-end -mb-2 mt-2 md:mt-0 px-1">
+                 <h2 class="font-headline-md text-on-surface-variant">Kết quả phân loại</h2>
+                 <div class="bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 flex items-center gap-1.5 shadow-sm">
+                     <span class="material-symbols-outlined text-[18px]">verified</span>
+                     <span class="font-label-md font-bold">Độ chính xác: 98.5%</span>
+                 </div>
+            </div>
+
+            <!-- Header & Gallery Card -->
+            <section class="bg-surface rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] overflow-hidden">
+                <div class="relative h-64 md:h-80 w-full group cursor-pointer">
+                    <img alt="Close up of mature rice panicles" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1EVR2gfc5fPp7SUEmovd18_lcgHg-4ID3gX8eZ99m3Wk7QzGeAbWqu5Zd7g5PK3Q1TQa5i6HOnwC5cGFnAd6xfj-ZnH-m8KzTz6uic-cbBI9E16izmQFutR9agI5g4vq_cb1tB3cPwDi7rILe5tLBpE17re0kjqoprfnWxk1WdWuNQoz-AD7USR-Xfj8bNQ498xn3Y_158pmtvqAWq-xjmqKI3kBSV96VkItVidIoTYhnU7toiZMLKh7r_jgO4kPcx5yHkbqf26qE"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-5">
+                        <span class="inline-block px-3 py-1 bg-primary text-on-primary font-label-md text-label-md rounded-full w-max mb-2 backdrop-blur-md bg-opacity-90 shadow-sm">Cây Lương Thực</span>
+                        <h1 class="font-headline-xl text-headline-xl text-on-secondary mb-1 drop-shadow-md">Lúa (Rice)</h1>
+                        <p class="font-headline-md text-headline-md text-on-secondary/90 italic font-medium drop-shadow-md">Oryza sativa</p>
+                    </div>
+                </div>
+                <div class="p-5 flex flex-col gap-4">
+                    <p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Lúa là một trong những loại cây lương thực quan trọng nhất thế giới, cung cấp nguồn năng lượng chính cho hơn một nửa dân số toàn cầu. Loài cây thân thảo này ưa nước và phát triển mạnh ở các vùng nhiệt đới và cận nhiệt đới.</p>
+                    <!-- Thumbnails -->
+                    <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+                        <img alt="Young green rice" class="w-24 h-24 rounded-lg object-cover flex-shrink-0 snap-start border border-outline-variant cursor-pointer hover:border-primary hover:shadow-md transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAchDFuFABEN02-HyPwTVNFoTYnl0QSqcOsy3EPg2PeQt-NcUeOG7Zqciis-sQ8LJnT6l-o-s0z2yoz0vVxvSBy03YGiFwPOvOU1XX6cnMT4eVu5rkrnyJ8QO3qJINQLghs2kR6ISeGadhJnudji5JZF26zXrJCO27hdGu8gmF21GE_at1EAJqBqlsBDNjJHiOw9tZJzMw5w8ISOqcDfLZu-NA3JG-L-sJSbYEGBwFnfyUYaoePuA26DiSZPAH-tfMwK2Mr8dWA88gP"/>
+                        <img alt="Terraced rice field" class="w-24 h-24 rounded-lg object-cover flex-shrink-0 snap-start border border-outline-variant cursor-pointer hover:border-primary hover:shadow-md transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_37Oy69_mUsWlK8VlbAwwE0s09NJ0__WgcSVTtNRdHkUyrzWq7YKGdA0acqLK9IMs8-qIc24rRxstCTGRN-yjnkRWbla_xeNiiv5Jbjs9eO59w87lv6ge59IdVSwlUldTik_LBlkK6R1BhnJYVwxLV3T-Lc_DsMYDb5yaAeJAXxyfOtjgASN6OB5xBWuB-z60jCqBkWg-OREhMcQfyHIJySD4ajNI-2gYohUlD9K1tK-9ZXgkQbQZ5esPVaKuhpzD0fvzOsK4BP_s"/>
+                        <img alt="Harvested rice grains" class="w-24 h-24 rounded-lg object-cover flex-shrink-0 snap-start border border-outline-variant cursor-pointer hover:border-primary hover:shadow-md transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAY5nGexkIDnnziHCu_TC4zBHhjrObKCf5c-2VJJtGf60P-DqyY8RPK_QnsXwRK1ks9B5Q8kU6y1lbch-g6OPLiYkil4nBkfLrb7sTBO_9_INr4iu8AVL-NVh98ftTTKE9qn-Fn2LD1B17PcxWwaLVjWKDF1q5oXlSknmXIcKEaT0jL68UroT-KYUHi-uqmfptdrnPUsCas5z0Ql-ahnP9CO_rFkcJtbgA3Kpz8B3V4zAC0Xbx5FEsNZMOxGwxWvoy57NQPH-W3Pz-n"/>
+                        <div class="w-24 h-24 rounded-lg bg-surface-container flex flex-col items-center justify-center flex-shrink-0 snap-start border border-outline-variant cursor-pointer hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                            <span class="material-symbols-outlined">add_photo_alternate</span>
+                            <span class="font-label-md text-label-md mt-1">Xem thêm</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Buttons for Result -->
+            <div class="flex gap-3 mt-1">
+                <button class="flex-1 bg-primary text-on-primary font-label-lg py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary-container hover:shadow-md transition-all">
+                    <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                    Thêm vào Vườn
+                </button>
+                <button class="flex-1 border border-outline bg-surface text-on-surface font-label-lg py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-container transition-all">
+                    <span class="material-symbols-outlined text-[20px]">forum</span>
+                    Hỏi Cộng Đồng
+                </button>
+            </div>
+
+            <!-- Bento Grid Layout for Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <!-- Scientific Classification -->
+                <div class="bg-surface p-5 rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] flex flex-col gap-3 hover:border-primary/30 transition-colors">
+                    <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined">science</span> Phân loại khoa học
+                    </h2>
+                    <div class="flex flex-col gap-2 mt-2">
+                        <div class="flex justify-between py-2 border-b border-surface-variant">
+                            <span class="font-body-md text-on-surface-variant">Giới (Kingdom)</span>
+                            <span class="font-label-lg text-label-lg text-on-surface">Plantae</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-surface-variant">
+                            <span class="font-body-md text-on-surface-variant">Bộ (Order)</span>
+                            <span class="font-label-lg text-label-lg text-on-surface">Poales</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-surface-variant">
+                            <span class="font-body-md text-on-surface-variant">Họ (Family)</span>
+                            <span class="font-label-lg text-label-lg text-on-surface">Poaceae</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-surface-variant">
+                            <span class="font-body-md text-on-surface-variant">Chi (Genus)</span>
+                            <span class="font-label-lg text-label-lg text-on-surface">Oryza</span>
+                        </div>
+                        <div class="flex justify-between py-2">
+                            <span class="font-body-md text-on-surface-variant">Loài (Species)</span>
+                            <span class="font-label-lg text-label-lg text-on-surface italic">O. sativa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Biological Attributes -->
+                <div class="bg-surface p-5 rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] flex flex-col gap-3 hover:border-primary/30 transition-colors">
+                    <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined">eco</span> Thuộc tính sinh học
+                    </h2>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-4 mt-2">
+                        <div class="flex flex-col">
+                            <span class="font-label-md text-label-md text-on-surface-variant">Loại cây</span>
+                            <span class="font-body-md text-on-surface font-medium">Thân thảo, một năm</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-label-md text-label-md text-on-surface-variant">Chiều cao</span>
+                            <span class="font-body-md text-on-surface font-medium">1 - 1.8m</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-label-md text-label-md text-on-surface-variant">Môi trường</span>
+                            <span class="font-body-md text-on-surface font-medium">Ngập nước / Đất ẩm</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-label-md text-label-md text-on-surface-variant">Sinh trưởng</span>
+                            <span class="font-body-md text-on-surface font-medium">90 - 150 ngày</span>
+                        </div>
+                        <div class="flex flex-col col-span-2 mt-1">
+                            <span class="font-label-md text-label-md text-on-surface-variant mb-2">Màu sắc đặc trưng</span>
+                            <div class="flex gap-2">
+                                <span class="px-2.5 py-1.5 bg-[#4CAF50]/10 text-[#2E7D32] border border-[#4CAF50]/30 rounded-lg font-label-md flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-[#4CAF50]"></div> Lá: Xanh lục
+                                </span>
+                                <span class="px-2.5 py-1.5 bg-[#FFC107]/10 text-[#B08D00] border border-[#FFC107]/30 rounded-lg font-label-md flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-[#FFC107]"></div> Hạt: Vàng óng
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Growing Conditions -->
+                <div class="bg-surface p-5 rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] flex flex-col gap-3 md:col-span-2">
+                    <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined">thermostat</span> Điều kiện sinh trưởng
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                        <div class="flex gap-3 items-start bg-surface-container-low p-4 rounded-xl border border-surface-variant hover:bg-surface-container transition-colors">
+                            <span class="material-symbols-outlined text-secondary text-[28px]" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+                            <div>
+                                <h3 class="font-label-lg text-label-lg text-on-surface">Lượng Nước</h3>
+                                <p class="font-body-md text-body-md text-on-surface-variant mt-1.5">Cần dồi dào, đặc biệt giai đoạn đẻ nhánh và làm đòng. Thường trồng ngập nước.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 items-start bg-surface-container-low p-4 rounded-xl border border-surface-variant hover:bg-surface-container transition-colors">
+                            <span class="material-symbols-outlined text-secondary text-[28px]" style="font-variation-settings: 'FILL' 1;">sunny</span>
+                            <div>
+                                <h3 class="font-label-lg text-label-lg text-on-surface">Ánh sáng</h3>
+                                <p class="font-body-md text-body-md text-on-surface-variant mt-1.5">Ưa sáng hoàn toàn. Cần nhiều giờ nắng để quang hợp tốt, giúp hạt chắc và năng suất.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 items-start bg-surface-container-low p-4 rounded-xl border border-surface-variant hover:bg-surface-container transition-colors">
+                            <span class="material-symbols-outlined text-secondary text-[28px]" style="font-variation-settings: 'FILL' 1;">landscape</span>
+                            <div>
+                                <h3 class="font-label-lg text-label-lg text-on-surface">Đất trồng</h3>
+                                <p class="font-body-md text-body-md text-on-surface-variant mt-1.5">Phù sa, đất thịt pha sét giữ nước tốt. Độ pH lý tưởng 5.5 - 6.5.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pests & Diseases (Warning Card) -->
+                <div class="bg-surface p-5 rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] flex flex-col gap-3">
+                    <h2 class="font-headline-md text-headline-md text-error flex items-center gap-2">
+                        <span class="material-symbols-outlined">bug_report</span> Sâu bệnh thường gặp
+                    </h2>
+                    <ul class="flex flex-col gap-4 mt-2">
+                        <li class="flex items-start gap-3 p-3 bg-error-container/20 rounded-lg border border-error-container/50">
+                            <span class="material-symbols-outlined text-error mt-0.5">warning</span>
+                            <div>
+                                <strong class="font-label-lg text-on-surface">Rầy nâu (Planthopper)</strong>
+                                <p class="font-body-md text-on-surface-variant mt-0.5">Hút nhựa cây làm lúa khô héo, lây truyền virus vàng lùn.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 p-3 bg-error-container/20 rounded-lg border border-error-container/50">
+                            <span class="material-symbols-outlined text-error mt-0.5">warning</span>
+                            <div>
+                                <strong class="font-label-lg text-on-surface">Đạo ôn (Blast Disease)</strong>
+                                <p class="font-body-md text-on-surface-variant mt-0.5">Nấm gây ra vết cháy trên lá và cổ bông.</p>
+                            </div>
+                        </li>
+                    </ul>
+                    <button class="mt-2 text-primary font-label-lg border border-primary py-2.5 px-4 rounded-xl hover:bg-primary/5 transition-colors text-center w-full">Xem thư viện bệnh học</button>
+                </div>
+
+                <!-- Expert Tips & Usage -->
+                <div class="bg-surface p-5 rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] flex flex-col gap-3">
+                    <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined">tips_and_updates</span> Mẹo chuyên gia
+                    </h2>
+                    <div class="mt-2 text-on-surface-variant font-body-md space-y-4">
+                        <p><strong>Thu hoạch:</strong> Nên gặt khi 85-90% số hạt trên bông chín vàng để tránh tỷ lệ rụng hạt và giảm chất lượng gạo.</p>
+                        <p><strong>Bảo quản:</strong> Phơi hoặc sấy khô đạt độ ẩm 14% để tránh nấm mốc, mối mọt.</p>
+                        <div class="bg-primary-container/20 p-4 rounded-xl border border-primary-container/40 flex gap-3 items-start mt-4">
+                            <span class="material-symbols-outlined text-primary-container text-[24px]">lightbulb</span>
+                            <p class="font-label-md text-on-surface leading-relaxed">Gốc rạ sau thu hoạch cày vùi làm phân hữu cơ hoặc trồng nấm rơm giúp tăng thu nhập phụ.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Story & Symbolism & Fun Fact -->
+                <div class="bg-surface p-5 rounded-xl border border-outline-variant shadow-sm shadow-[0_-2px_10px_rgba(46,125,50,0.08)] flex flex-col gap-5 md:col-span-2">
+                    <div>
+                        <h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2 mb-3">
+                            <span class="material-symbols-outlined">menu_book</span> Giá trị Văn Hóa & Lịch Sử
+                        </h2>
+                        <p class="font-body-md text-on-surface-variant leading-relaxed">Lúa nước gắn liền với nền văn minh Á Đông. Hàng ngàn năm nay, nó không chỉ là nguồn sống mà là biểu tượng của sự ấm no, phồn vinh. Trong văn hóa Việt Nam, "hạt gạo làng ta" mang ý nghĩa thiêng liêng, thể hiện sự cần cù của người nông dân.</p>
+                    </div>
+                    <div class="bg-secondary-container/20 p-5 rounded-xl border border-secondary-container/50">
+                        <h3 class="font-label-lg text-on-secondary-container flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined">celebration</span> Bạn có biết?
+                        </h3>
+                        <p class="font-body-md text-on-surface-variant italic leading-relaxed">Có hơn 40,000 giống lúa khác nhau trên toàn thế giới! Gene của cây lúa đã được giải mã hoàn chỉnh từ năm 2002, mở ra bước tiến lớn cho nghiên cứu nông nghiệp hiện đại chống biến đổi khí hậu.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- BottomNavBar (Mobile) -->
+        <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface shadow-[0_-5px_10px_rgba(0,0,0,0.05)] md:hidden border-t border-surface-container-highest">
+            <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+                <span class="material-symbols-outlined">home</span>
+                <span class="font-label-md text-[10px] mt-1">Bảng tin</span>
+            </a>
+            <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+                <span class="material-symbols-outlined">library_books</span>
+                <span class="font-label-md text-[10px] mt-1">Cẩm nang</span>
+            </a>
+            <a class="flex flex-col items-center justify-center -mt-6 bg-primary text-on-primary rounded-full p-3 shadow-lg shadow-primary/30 transition-transform active:scale-90" href="#">
+                <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+            </a>
+            <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+                <span class="material-symbols-outlined">psychology</span>
+                <span class="font-label-md text-[10px] mt-1">Chuyên gia</span>
+            </a>
+            <a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+                <span class="material-symbols-outlined">local_florist</span>
+                <span class="font-label-md text-[10px] mt-1">Vườn</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Script to transition from Scanning to Result -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressBar = document.getElementById('progress-bar');
+            const scanningOverlay = document.getElementById('scanning-overlay');
+            const resultContent = document.getElementById('result-content');
+            
+            // 1. Simulate Progress Bar
+            setTimeout(() => {
+                progressBar.style.width = '70%';
+            }, 600);
+            
+            setTimeout(() => {
+                progressBar.style.width = '100%';
+            }, 1800);
+
+            // 2. Hide Scanning and Show Result after 2.5 seconds
+            setTimeout(() => {
+                // Fade out overlay
+                scanningOverlay.style.transition = 'opacity 0.5s ease-out';
+                scanningOverlay.style.opacity = '0';
+                
+                // Wait for fade out to complete before hiding display
+                setTimeout(() => {
+                    scanningOverlay.style.display = 'none';
+                    
+                    // Show result content and trigger fade in
+                    resultContent.classList.remove('hidden');
+                    // Small delay to ensure display:block applies before opacity transition
+                    setTimeout(() => {
+                        resultContent.style.opacity = '1';
+                    }, 50);
+                    
+                }, 500);
+
+            }, 2500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "appId": "com.agrisocial.app",
+  "appName": "AgriSocial",
+  "webDir": "www",
+  "server": {
+    "url": "https://anhasda-agrisocial.hf.space",
+    "cleartext": true
+  }
+}

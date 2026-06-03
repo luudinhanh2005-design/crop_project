@@ -1,0 +1,12 @@
+# Cấu hình tập dữ liệu YOLOv8 cho AgriSocial (4 lớp tối ưu Phase 1)
+path: dataset # Thư mục gốc của dataset (tương đối so với project root)
+
+train: images/train # Thư mục ảnh huấn luyện
+val: images/val     # Thư mục ảnh kiểm thử
+
+# Danh sách 4 lớp bệnh hại của Lúa và Ngô
+names:
+  0: rice_blast                  # Đạo ôn lúa
+  1: rice_bacterial_blight       # Bạc lá lúa
+  2: corn_rust                   # Rỉ sắt ngô
+  3: corn_blight                 # Cháy lá ngô

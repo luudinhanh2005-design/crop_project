@@ -1,0 +1,11 @@
+models/crop_super_v2s_best.keras filter=lfs diff=lfs merge=lfs -text
+models/best_yolo_v1.pt filter=lfs diff=lfs merge=lfs -text
+models/crop_super_v2s_last.keras filter=lfs diff=lfs merge=lfs -text
+models/*.h5 filter=lfs diff=lfs merge=lfs -text
+models/**/*.pb filter=lfs diff=lfs merge=lfs -text
+models/**/variables.data* filter=lfs diff=lfs merge=lfs -text
+models/*.keras filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text

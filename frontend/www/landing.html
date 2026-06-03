@@ -1,0 +1,38 @@
+<!-- LANDING PAGE - AgriSocial -->
+<div id="landing-page" class="landing-page">
+  <div class="landing-left">
+    <div class="landing-logo">
+      <div class="landing-logo-icon">🌿</div>
+      <div><h1>AgriSocial</h1><p>Mạng xã hội nông nghiệp thông minh</p></div>
+    </div>
+    <h2 class="landing-headline">Kết nối cộng đồng<br>nông dân Việt Nam</h2>
+    <p class="landing-subtitle">Chia sẻ kinh nghiệm, nhận diện cây trồng bằng AI,<br>và nhận tư vấn từ chuyên gia hàng đầu</p>
+    <div class="landing-stats">
+      <div class="landing-stat"><span class="stat-icon">🌿</span><div class="stat-label">AI nhận diện</div><div class="stat-desc">12 loại cây</div></div>
+      <div class="landing-stat"><span class="stat-icon">👥</span><div class="stat-label">15K+ người dùng</div><div class="stat-desc">Cộng đồng sôi động</div></div>
+      <div class="landing-stat"><span class="stat-icon">⭐</span><div class="stat-label">98.5% chính xác</div><div class="stat-desc">Độ tin cậy cao</div></div>
+    </div>
+  </div>
+  <div class="landing-right">
+    <div class="login-card">
+      <h2>Đăng nhập</h2>
+      <p class="login-sub">Chào mừng trở lại với AgriSocial!</p>
+      <div class="demo-banner">
+        <div class="demo-icon">💡</div>
+        <div class="demo-text"><strong>Tài khoản Demo</strong>• Người dùng: user@agrisocial.vn / user123<br>• Quản trị: admin@agrisocial.vn / admin123<br>• Chuyên gia: expert@agrisocial.vn / expert123</div>
+      </div>
+      <div class="login-field"><label>Email</label><div class="input-wrap"><span class="input-icon">✉</span><input type="email" id="landing-email" placeholder="email@agrisocial.vn"></div></div>
+      <div class="login-field"><label>Mật khẩu</label><div class="input-wrap"><span class="input-icon">🔒</span><input type="password" id="landing-password" placeholder="••••••••"><button class="input-toggle" onclick="let i=document.getElementById('landing-password');i.type=i.type==='password'?'text':'password'">👁</button></div></div>
+      <div class="login-options"><label><input type="checkbox"> Ghi nhớ đăng nhập</label><a href="#">Quên mật khẩu?</a></div>
+      <button class="btn-login-main" id="btn-landing-login" onclick="handleLandingLogin()">Đăng nhập →</button>
+      <div class="login-divider">Hoặc đăng nhập nhanh</div>
+      <div class="demo-accounts">
+        <p class="demo-hint">💡 Nhấp vào tài khoản demo để đăng nhập nhanh</p>
+        <button class="demo-account-btn" onclick="quickLogin('user@agrisocial.vn','user123')"><div class="da-avatar" style="background:#16a34a">👤</div><div class="da-info"><strong>Người dùng <span class="da-badge">Demo</span></strong><small>user@agrisocial.vn</small></div><span class="da-arrow">→</span></button>
+        <button class="demo-account-btn" onclick="quickLogin('admin@agrisocial.vn','admin123')"><div class="da-avatar" style="background:#ef4444">⚙️</div><div class="da-info"><strong>Quản trị viên <span class="da-badge">Demo</span></strong><small>admin@agrisocial.vn</small></div><span class="da-arrow">→</span></button>
+        <button class="demo-account-btn" onclick="quickLogin('expert@agrisocial.vn','expert123')"><div class="da-avatar" style="background:#3b82f6">👨‍🔬</div><div class="da-info"><strong>Chuyên gia <span class="da-badge">Demo</span></strong><small>expert@agrisocial.vn</small></div><span class="da-arrow">→</span></button>
+      </div>
+      <div class="login-footer">Chưa có tài khoản? <a href="#" onclick="document.getElementById('landing-page').style.display='none';document.getElementById('auth-modal').style.display='flex';document.getElementById('auth-mode').value='register'">Đăng ký ngay</a></div>
+    </div>
+  </div>
+</div>

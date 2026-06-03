@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Expert Dashboard - AgriSocial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Thêm thư viện Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-active {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(4, 120, 87, 0.2);
+        }
+
+        .tab-inactive {
+            color: #4b5563;
+        }
+
+        .tab-inactive:hover {
+            background-color: #f3f4f6;
+            color: #065f46;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            border-right: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        /* Custom scrollbar for consultation panel */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Toast Notification styling */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast-animate {
+            animation: slideInRight 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen flex flex-col md:flex-row text-slate-800 antialiased">
+
+    <!-- Top Mobile Bar -->
+    <div
+        class="md:hidden w-full bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div onclick="goHome()" class="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity">
+            <div class="w-10 h-10 bg-[#0d631b] rounded-xl flex items-center justify-center shadow-md">
+                <i data-lucide="leaf" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <span class="font-extrabold text-xl text-[#0d631b] tracking-tight">AgriSocial</span>
+            </div>
+        </div>
+        <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" class="p-2 hover:bg-slate-100 rounded-xl">
+            <i data-lucide="menu" class="w-6 h-6 text-emerald-800"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-72 glass-sidebar flex flex-col justify-between p-6 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out">
+        <div class="space-y-6">
+            <div onclick="goHome()"
+                class="flex items-center gap-3 px-2 cursor-pointer hover:opacity-85 transition-opacity">
+                <div
+                    class="w-11 h-11 bg-[#0d631b] rounded-2xl flex items-center justify-center shadow-md shadow-[#0d631b]/20">
+                    <i data-lucide="leaf" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h2 class="font-black text-[22px] text-[#0d631b] tracking-tight">AgriSocial</h2>
+                </div>
+            </div>
+
+            <!-- Profile Widget -->
+            <div onclick="goPublicProfile()"
+                class="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-emerald-50 to-teal-50/50 rounded-2xl p-4 border border-emerald-100/50 flex flex-col items-center text-center relative overflow-hidden group">
+                <div class="absolute top-2 right-2" id="verified-badge-container">
+                    <span
+                        class="px-2 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-extrabold rounded-full tracking-wider uppercase"
+                        id="badge-status-side">Chưa xác thực</span>
+                </div>
+                <img id="expert-avatar" src="https://ui-avatars.com/api/?name=Expert&background=10b981&color=fff"
+                    class="w-16 h-16 rounded-full border-2 border-white shadow-md mb-3 object-cover" alt="Avatar" />
+                <h3 class="font-bold text-slate-800 text-sm" id="expert-name-side">Chuyên gia AgriSocial</h3>
+                <p class="text-xs text-slate-400 font-semibold mb-1" id="expert-email-side">expert@agrisocial.vn</p>
+                <div
+                    class="flex items-center gap-1 mt-1 bg-emerald-600/10 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    <span>Chuyên Gia Nông Nghiệp</span>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="space-y-1.5" id="nav-container">
+                <button onclick="switchTab('overview')" id="btn-overview"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all tab-active">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span>Tổng quan</span>
+                </button>
+                <button onclick="switchTab('consultations')" id="btn-consultations"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all tab-inactive">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="message-square" class="w-5 h-5"></i>
+                        <span>Yêu cầu tư vấn</span>
+                    </div>
+                    <span id="pending-count-badge"
+                        class="px-2 py-0.5 bg-rose-500 text-white text-xs font-bold rounded-full hidden">0</span>
+                </button>
+                <button onclick="switchTab('profile')" id="btn-profile"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all tab-inactive">
+                    <i data-lucide="user-cog" class="w-5 h-5"></i>
+                    <span>Hồ sơ chuyên môn</span>
+                </button>
+                <button onclick="switchTab('verification')" id="btn-verification"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all tab-inactive">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    <span>Xác minh chứng chỉ</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Footer / Logout -->
+        <div class="pt-6 border-t border-slate-200/60 space-y-3">
+            <button onclick="goHome()"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:text-emerald-700 hover:bg-emerald-50/50 transition-colors">
+                <i data-lucide="home" class="w-4 h-4 pointer-events-none"></i>
+                <span class="pointer-events-none">Về trang chủ</span>
+            </button>
+            <button onclick="handleLogout()"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-sm text-rose-500 hover:bg-rose-50 transition-colors">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto max-w-7xl mx-auto w-full space-y-8">
+
+        <!-- Header Panel (Slim Top Bar) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl"></div>
+            <div class="space-y-1 z-10 relative">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 bg-white/10 text-white text-[9px] font-bold rounded-full border border-white/10 uppercase tracking-widest backdrop-blur-md">Local Server & Supabase</span>
+                    <span id="badge-top-ver" class="px-2 py-0.5 bg-rose-500/20 text-rose-200 text-[9px] font-bold rounded-full border border-rose-500/20 uppercase tracking-widest backdrop-blur-md">Chưa xác thực</span>
+                </div>
+                <h1 class="text-xl md:text-2xl font-black tracking-tight" id="welcome-title">Xin chào, Chuyên gia</h1>
+            </div>
+            <div class="flex items-center gap-2 bg-black/40 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 z-10 self-start sm:self-auto">
+                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-emerald-300">Sẵn sàng</span>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: OVERVIEW ==================== -->
+        <section id="tab-overview" class="tab-content active space-y-8">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:shadow-md hover:ring-2 hover:ring-emerald-500/20 transition-all" onclick="openResolvedRequestsModal()">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl shadow-inner border border-emerald-100/50 flex items-center justify-center text-emerald-600">
+                            <i data-lucide="check-square" class="w-6 h-6"></i>
+                        </div>
+                        <span
+                            class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Hiệu
+                            suất</span>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider block">Yêu cầu đã giải
+                            đáp</span>
+                        <span class="text-3xl font-black text-slate-800" id="stat-answers">-</span>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:shadow-md hover:ring-2 hover:ring-amber-500/20 transition-all" onclick="openExpertRatingsModal()">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl shadow-inner border border-amber-100/50 flex items-center justify-center text-amber-600">
+                            <i data-lucide="star" class="w-6 h-6"></i>
+                        </div>
+                        <span
+                            class="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Đánh
+                            giá</span>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider block">Độ tin cậy</span>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-3xl font-black text-slate-800" id="stat-rating">-</span>
+                            <div class="flex text-amber-400"><i data-lucide="star" class="w-4 h-4 fill-amber-400"></i></div>
+                            <span class="text-xs text-slate-400 font-bold" id="stat-rating-count">(...)</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[140px]">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 bg-gradient-to-br from-teal-100 to-teal-50 rounded-2xl shadow-inner border border-teal-100/50 flex items-center justify-center text-teal-600">
+                            <i data-lucide="heart" class="w-6 h-6"></i>
+                        </div>
+                        <span
+                            class="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Hữu
+                            ích</span>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider block">Lượt giúp
+                            ích</span>
+                        <span class="text-3xl font-black text-slate-800" id="stat-helpful">-</span>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[140px]">
+                    <div class="flex items-center justify-between">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl shadow-inner border border-blue-100/50 flex items-center justify-center text-blue-600">
+                            <i data-lucide="scan-line" class="w-6 h-6"></i>
+                        </div>
+                        <span
+                            class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Hệ
+                            thống</span>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider block">Quy mô quét
+                            bệnh</span>
+                        <span class="text-3xl font-black text-slate-800" id="stat-scans">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lower Layout Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Content: Overview Details & Verification Status Card -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Verification banner -->
+                    <div id="ver-alert-card"
+                        class="rounded-3xl p-6 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <!-- Filled dynamically -->
+                    </div>
+
+                    <!-- Pending Quick consult list -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-extrabold text-lg text-slate-800 flex items-center gap-2">
+                                <i data-lucide="clock" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Yêu cầu tư vấn mới nhất</span>
+                            </h3>
+                            <button onclick="switchTab('consultations')"
+                                class="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition-colors uppercase tracking-wider">Xem
+                                tất cả →</button>
+                        </div>
+                        <div class="space-y-4" id="overview-requests-list">
+                            <!-- Populated dynamically -->
+                            <div class="text-center py-6 text-slate-400">
+                                <p>Đang tải danh sách yêu cầu...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Content: System Status & Resources -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 space-y-6">
+                        <h3 class="font-extrabold text-lg text-slate-800">Cơ cấu Hạ tầng</h3>
+                        <div class="space-y-4">
+                            <div
+                                class="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors rounded-2xl border border-slate-100/80">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
+                                        <i data-lucide="cloud-lightning" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-bold text-sm text-slate-700">API Server</span>
+                                </div>
+                                <span
+                                    class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">Online</span>
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors rounded-2xl border border-slate-100/80">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-9 h-9 bg-teal-100 rounded-xl flex items-center justify-center text-teal-600">
+                                        <i data-lucide="database" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-bold text-sm text-slate-700">Supabase DB</span>
+                                </div>
+                                <span
+                                    class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">Online</span>
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors rounded-2xl border border-slate-100/80">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                                        <i data-lucide="cpu" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-bold text-sm text-slate-700">Crop AI Model</span>
+                                </div>
+                                <span
+                                    class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Helpful resources -->
+                    <div
+                        class="bg-gradient-to-br from-teal-800 to-emerald-900 text-white rounded-3xl p-6 shadow-lg shadow-teal-950/20 relative overflow-hidden">
+                        <div class="space-y-4 relative z-10">
+                            <h3 class="font-extrabold text-lg">Cẩm nang Chuyên gia</h3>
+                            <p class="text-xs text-teal-100/80 leading-relaxed">Luôn đảm bảo chẩn đoán chính xác dựa
+                                trên hình ảnh vết bệnh, thông tin cây trồng và đề xuất thuốc bảo vệ thực vật nằm trong
+                                danh mục cho phép của Bộ NN&PTNT.</p>
+                            <a href="https://www.mard.gov.vn" target="_blank"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/10 hover:bg-white/20 transition-all rounded-xl text-xs font-extrabold uppercase tracking-wider">
+                                <span>Xem quy chuẩn</span>
+                                <i data-lucide="external-link" class="w-4.5 h-4.5"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: CONSULTATIONS ==================== -->
+        <section id="tab-consultations" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Yêu cầu tư vấn kỹ thuật</h2>
+                    <p class="text-sm text-slate-400 font-medium">Danh sách các yêu cầu chuẩn đoán bệnh từ nông dân cần
+                        bạn tư vấn chuyên khoa.</p>
+                </div>
+                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200">
+                    <span class="text-xs font-bold text-slate-400">Bộ lọc trạng thái:</span>
+                    <span
+                        class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-extrabold rounded-full border border-emerald-100">Đang
+                        chờ xử lý</span>
+                </div>
+            </div>
+
+            <!-- Main consult board -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <!-- Left Side: Consult Request list -->
+                <div class="lg:col-span-5 space-y-4 max-h-[600px] overflow-y-auto custom-scroll pr-2"
+                    id="consult-requests-container">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Right Side: Consultation Workspace / Reply Form -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm"
+                    id="workspace-container">
+                    <div class="text-center py-20 text-slate-400 flex flex-col items-center justify-center gap-4">
+                        <div
+                            class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                            <i data-lucide="file-signature" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-extrabold text-slate-700">Không gian làm việc</h4>
+                            <p class="text-xs text-slate-400 max-w-xs mx-auto mt-1">Vui lòng chọn một yêu cầu tư vấn ở
+                                danh sách bên trái để tiến hành chuẩn đoán dịch bệnh cây trồng.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: PROFILE ==================== -->
+        <section id="tab-profile" class="tab-content space-y-6">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Hồ sơ chuyên môn</h2>
+                <p class="text-sm text-slate-400 font-medium">Thiết lập thông tin học hàm, học vị, và lĩnh vực thế mạnh
+                    của bạn để tạo uy tín với bà con nông dân.</p>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <form id="profile-form" onsubmit="handleProfileUpdate(event)" class="p-6 md:p-8 space-y-8">
+                    <!-- Avatar section -->
+                    <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
+                        <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-upload-menu').classList.toggle('hidden')">
+                            <img id="profile-avatar-preview"
+                                src="https://ui-avatars.com/api/?name=Expert&background=10b981&color=fff"
+                                class="w-20 h-20 rounded-full object-cover border-2 border-emerald-500/20 shadow-md group-hover:opacity-75 transition-opacity"
+                                alt="Avatar" />
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-full">
+                                <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                            </div>
+                            
+                            <!-- Fixed Modal Overlay for Dropdown Menu -->
+                            <div id="avatar-upload-menu" class="hidden fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onclick="this.classList.add('hidden')">
+                                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col font-semibold text-slate-700 transform transition-all" onclick="event.stopPropagation()">
+                                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                        <h3 class="font-bold text-slate-800">Cập nhật ảnh đại diện</h3>
+                                        <button type="button" class="text-slate-400 hover:text-slate-600 p-1" onclick="document.getElementById('avatar-upload-menu').classList.add('hidden')">
+                                            <i data-lucide="x" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                    <label class="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50">
+                                        <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                                            <i data-lucide="image" class="w-5 h-5 text-emerald-600"></i>
+                                        </div>
+                                        <span>Chọn từ thư viện</span>
+                                        <input type="file" id="avatar-upload-file" class="hidden" accept="image/*" onchange="handleAvatarSelected(event)">
+                                    </label>
+                                    <label class="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50">
+                                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                            <i data-lucide="camera" class="w-5 h-5 text-blue-600"></i>
+                                        </div>
+                                        <span>Chụp ảnh mới</span>
+                                        <input type="file" id="avatar-upload-camera" class="hidden" accept="image/*" capture="environment" onchange="handleAvatarSelected(event)">
+                                    </label>
+                                    <div class="flex items-center gap-4 px-6 py-4 hover:bg-rose-50 cursor-pointer transition-colors text-rose-600" onclick="removeAvatar(event)">
+                                        <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0 text-rose-500 group-hover:bg-rose-100">
+                                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                        </div>
+                                        <span>Xóa ảnh hiện tại</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-center sm:text-left">
+                            <h4 class="font-bold text-slate-800">Ảnh đại diện chuyên gia</h4>
+                            <p class="text-xs text-slate-400 max-w-sm">Nhấn vào ảnh để thay đổi. Ảnh sẽ được tự động lưu ngay khi bạn chọn.</p>
+                            <input type="hidden" id="profile-avatar-url" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Họ và
+                                Tên</label>
+                            <input type="text" id="profile-fullname" required placeholder="Ví dụ: GS. TS. Nguyễn Văn A"
+                                class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800" />
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Địa chỉ
+                                Email</label>
+                            <input type="email" id="profile-email" readonly
+                                class="w-full p-3.5 bg-slate-100 border border-slate-200 rounded-2xl outline-none cursor-not-allowed text-slate-400 font-semibold" />
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Lĩnh vực
+                                chuyên môn thế mạnh</label>
+                            <select id="profile-main-crop"
+                                class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800">
+                                <option value="Lúa gạo">Chuyên gia Lúa gạo (Cây lúa nước, lúa mì...)</option>
+                                <option value="Cây ăn quả">Chuyên gia Cây ăn quả (Bưởi, cam, xoài...)</option>
+                                <option value="Cây hoa màu">Chuyên gia Cây hoa màu (Ngô, khoai, sắn...)</option>
+                                <option value="Bảo vệ thực vật">Chuyên khoa Bảo vệ thực vật (Dịch tễ sâu hại...)
+                                </option>
+                                <option value="Khác">Lĩnh vực nông nghiệp khác</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Số năm kinh
+                                nghiệm tư vấn</label>
+                            <input type="text" id="profile-experience" placeholder="Ví dụ: 10 năm kinh nghiệm"
+                                class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800" />
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Số điện
+                                thoại liên hệ</label>
+                            <input type="text" id="profile-phone" placeholder="Ví dụ: 0987654321"
+                                class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800" />
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Học hàm/Học
+                                vị & Nơi công tác</label>
+                            <input type="text" id="profile-website"
+                                placeholder="Ví dụ: Tiến sĩ Bảo vệ Thực vật - Đại học Cần Thơ"
+                                class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Tiểu sử chuyên
+                            môn cá nhân</label>
+                        <textarea id="profile-bio" rows="4"
+                            placeholder="Giới thiệu tóm tắt về kinh nghiệm nghiên cứu, các công trình khoa học hoặc định hướng tư vấn nông nghiệp của bạn để nông dân hiểu rõ hơn..."
+                            class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800"></textarea>
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="submit"
+                            class="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl hover:shadow-lg transition-all font-bold text-sm">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>Lưu thay đổi hồ sơ</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: VERIFICATION ==================== -->
+        <section id="tab-verification" class="tab-content space-y-6">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Xác minh Hồ sơ Chuyên gia</h2>
+                <p class="text-sm text-slate-400 font-medium">Gửi tài liệu năng lực (bằng đại học, chứng chỉ chuyên
+                    khoa) để nhận được huy hiệu "Chuyên gia xác thực" màu xanh lá cây.</p>
+            </div>
+
+            <!-- Verification Main panel -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left: Verification Form -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                        <h3 class="font-extrabold text-lg text-slate-800">Đơn gửi hồ sơ thẩm định</h3>
+
+                        <!-- Upload Container -->
+                        <div class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/50 transition-all duration-300 rounded-[2rem] p-10 group flex flex-col items-center justify-center text-center gap-4 cursor-pointer relative"
+                            id="upload-box" onclick="triggerFileInput()">
+                            <input type="file" id="cert-file-input" class="hidden" onchange="handleFileSelect(event)"
+                                accept="image/*,.pdf" />
+                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl shadow-inner border border-emerald-100/50 flex items-center justify-center text-emerald-600"
+                                id="upload-icon-container">
+                                <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <h4 class="font-bold text-slate-800" id="upload-status-title">Tải ảnh bằng cấp/chứng
+                                    nhận năng lực</h4>
+                                <p class="text-xs text-slate-400 max-w-sm" id="upload-status-desc">Hỗ trợ các file hình
+                                    ảnh hoặc PDF. Dung lượng tối đa 5MB. Đây là minh chứng bắt buộc để quản trị viên phê
+                                    duyệt hồ sơ chuyên gia.</p>
+                            </div>
+                        </div>
+
+                        <!-- Certificate name / meta input -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Tên bằng cấp
+                                / Chứng chỉ chuyên khoa</label>
+                            <input type="text" id="cert-name"
+                                placeholder="Ví dụ: Bằng Tiến sĩ Khoa học Cây trồng hoặc Chứng chỉ Bảo vệ Thực vật"
+                                class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800" />
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button id="submit-verification-btn" onclick="submitVerification()"
+                                class="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl hover:shadow-lg transition-all font-bold text-sm">
+                                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                                <span>Gửi yêu cầu xác thực</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Rules & Verification Status widget -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-6">
+                        <h3 class="font-extrabold text-lg text-slate-800">Tiêu chuẩn phê duyệt</h3>
+                        <ul class="space-y-4">
+                            <li class="flex gap-3">
+                                <div
+                                    class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed font-semibold">Tài liệu tải lên phải rõ
+                                    nét, thấy rõ họ tên trùng khớp với hồ sơ và dấu mộc đỏ công chứng.</p>
+                            </li>
+                            <li class="flex gap-3">
+                                <div
+                                    class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed font-semibold">Bằng cấp phải thuộc
+                                    ngành kỹ thuật nông nghiệp, công nghệ sinh học hoặc khoa học cây trồng.</p>
+                            </li>
+                            <li class="flex gap-3">
+                                <div
+                                    class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed font-semibold">Thời gian thẩm định kéo
+                                    dài trung bình từ 12h đến 24h làm việc hành chính.</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Detailed Consultation Request Modal -->
+    <!-- Resolved Requests Modal -->
+    <div id="resolved-requests-modal" class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div>
+                    <h3 class="font-extrabold text-lg text-slate-800">Yêu cầu đã giải đáp</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Danh sách các ca bệnh bạn đã tư vấn thành công.</p>
+                </div>
+                <button onclick="closeResolvedRequestsModal()" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll space-y-4" id="resolved-requests-container" style="background: #f8fafc;">
+                <!-- Dynamically populated -->
+                <div class="text-center py-10 text-slate-400 font-medium text-sm">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+                    Đang tải danh sách...
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="closeResolvedRequestsModal()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-xl text-sm transition-colors shadow-sm">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expert Ratings Modal -->
+    <div id="expert-ratings-modal" class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                        <i data-lucide="star" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-800">Đánh giá từ người dùng</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">Những phản hồi bạn đã nhận được</p>
+                    </div>
+                </div>
+                <button onclick="closeExpertRatingsModal()" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll space-y-4" id="expert-ratings-container" style="background: #f8fafc;">
+                <!-- Dynamically populated -->
+                <div class="text-center py-10 text-slate-400 font-medium text-sm">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+                    Đang tải đánh giá...
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="closeExpertRatingsModal()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-xl text-sm transition-colors shadow-sm">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submitted Profile Modal -->
+    <div id="submitted-profile-modal" class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h3 class="font-extrabold text-lg text-slate-800">Hồ sơ đã gửi</h3>
+                <button onclick="closeSubmittedProfileModal()" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-5">
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</span>
+                    <span class="inline-flex w-fit px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-extrabold rounded-full uppercase border border-amber-200">Chờ duyệt</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tên chứng chỉ</span>
+                    <p id="submitted-cert-name-text" class="font-semibold text-slate-700 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100"></p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ảnh đính kèm</span>
+                    <img id="submitted-cert-img" src="" class="w-full rounded-xl border border-slate-200 object-contain max-h-[300px] bg-slate-50 cursor-zoom-in" onclick="zoomImage(this.src)" />
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="closeSubmittedProfileModal()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-xl text-sm transition-colors shadow-sm">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="fixed inset-0 z-[70] bg-black/80 flex items-center justify-center p-4 hidden"
+        onclick="closeImageModal()">
+        <img id="modal-zoom-image" src=""
+            class="max-w-full max-h-[90vh] rounded-2xl object-contain shadow-2xl border-2 border-white/10" alt="Zoom" />
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script>
+        // Initialize Supabase Client
+        const SUPABASE_URL = "https://rsjiaxbvlnslmtollozg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJza" +
+            "mlheGJ2bG5zbG10b2xsb3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NTg1NjcsImV4cCI6MjA5MjQzNDU2N30.vl13Y4ZiVd6p2j2zdIEQbyS0Lk5V" +
+            "0OFiJ0AQLHLxK_c";
+        
+        try {
+            if (typeof supabase !== 'undefined') {
+                window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    auth: {
+                        autoRefreshToken: true,
+                        persistSession: true,
+                        detectSessionInUrl: true
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Supabase Init Error:", e);
+        }
+
+        function goHome() {
+            localStorage.setItem('bypass_expert_redirect', 'true');
+            window.location.href = 'index.html?t=' + new Date().getTime();
+        }
+
+        function goPublicProfile() {
+            localStorage.setItem('bypass_expert_redirect', 'true');
+            localStorage.setItem('agrisocial_current_page', 'page-profile');
+            // Xóa target_profile_id để ưu tiên mở profile của chính mình
+            localStorage.removeItem('agrisocial_target_profile_id');
+            window.location.href = 'index.html?t=' + new Date().getTime();
+        }
+
+        // Set document encoding and state
+        var userSession = null;
+        var pendingRequests = [];
+        var activeRequest = null;
+        var selectedFile = null;
+
+        function getCropName(req) {
+            if (req.crop_name && req.crop_name !== 'undefined') return req.crop_name;
+            const pred = (req.ai_prediction || '').toLowerCase();
+            if (pred.includes('rice') || pred.includes('lúa') || pred.includes('lua')) return 'Lúa nước';
+            if (pred.includes('corn') || pred.includes('ngô') || pred.includes('ngo')) return 'Cây Ngô';
+            if (pred.includes('wheat') || pred.includes('mì') || pred.includes('mi')) return 'Thân Lúa mì';
+            if (pred.includes('potato') || pred.includes('tây') || pred.includes('tay')) return 'Khoai tây';
+            if (pred.includes('cassava') || pred.includes('sắn') || pred.includes('san')) return 'Cây sắn';
+            return 'Cây trồng';
+        }
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            checkAuth();
+            loadStats();
+            loadPendingRequests();
+            loadProfile();
+            updateVerificationUI();
+        });
+
+        // 1. Guard check and access control
+        function checkAuth() {
+            const token = localStorage.getItem('agrisocial_token');
+            const userStr = localStorage.getItem('agrisocial_user');
+
+            if (!token || !userStr) {
+                showToast("Bạn cần đăng nhập trước!", "error");
+                setTimeout(() => window.location.href = 'index.html', 1500);
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            if (user.role !== 'expert' && user.role !== 'admin') {
+                showToast("Tài khoản không có quyền truy cập!", "error");
+                setTimeout(() => window.location.href = 'index.html', 1500);
+                return;
+            }
+
+            userSession = user;
+            userSession.id = user.sub || user.id; // ensure ID is mapped
+
+            // Set header profile details
+            document.getElementById('expert-name-side').innerText = user.full_name || user.username || "Chuyên gia";
+            document.getElementById('expert-email-side').innerText = user.email || "expert@agrisocial.vn";
+            document.getElementById('welcome-title').innerText = `Xin chào, ${user.full_name || user.username}!`;
+
+            if (user.avatar_url) {
+                document.getElementById('expert-avatar').src = user.avatar_url;
+                document.getElementById('profile-avatar-preview').src = user.avatar_url;
+            } else {
+                const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username)}&background=10b981&color=fff`;
+                document.getElementById('expert-avatar').src = defaultAvatar;
+                document.getElementById('profile-avatar-preview').src = defaultAvatar;
+            }
+        }
+
+        // 2. Fetch statistics dynamically
+        async function loadStats() {
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/expert/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const stats = await res.json();
+                if (stats.success) {
+                    document.getElementById('stat-answers').innerText = stats.answers || 0;
+                    document.getElementById('stat-scans').innerText = stats.scans || 0;
+                    document.getElementById('stat-helpful').innerText = stats.helpful || 0;
+                    document.getElementById('stat-rating').innerText = (stats.rating_count > 0 && stats.rating) ? stats.rating : "—";
+                    
+                    const countEl = document.getElementById('stat-rating-count');
+                    if (countEl) {
+                        countEl.innerText = `(${stats.rating_count || 0} đánh giá)`;
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi tải thống kê:", err);
+            }
+        }
+
+        // 3. Tab routing logic
+        function switchTab(tabId) {
+            // Hide all tab panels
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            // Show target tab panel
+            const targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) targetTab.classList.add('active');
+
+            // Update tab button styles
+            document.querySelectorAll('#nav-container button').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('tab-inactive');
+            });
+
+            const targetBtn = document.getElementById('btn-' + tabId);
+            if (targetBtn) {
+                targetBtn.classList.add('tab-active');
+                targetBtn.classList.remove('tab-inactive');
+            }
+
+            // Close mobile menu if open
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.add('-translate-x-full');
+            }
+
+            // Perform tab specific reloading
+            if (tabId === 'consultations') {
+                loadPendingRequests();
+            } else if (tabId === 'overview') {
+                loadStats();
+                loadPendingRequests();
+            } else if (tabId === 'profile') {
+                loadProfile();
+            }
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        // 4. Fetch profile from database
+        async function loadProfile() {
+            if (!userSession) return;
+            try {
+                // Gọi trực tiếp Supabase
+                const { data: profile, error } = await window.supabaseClient
+                    .from('expert_profiles')
+                    .select('*')
+                    .eq('user_id', userSession.id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 is row not found
+                    console.error("Lỗi lấy thông tin từ Supabase:", error);
+                    return;
+                }
+
+                if (profile && profile.id) {
+                    // Populate profile form fields
+                    document.getElementById('profile-fullname').value = profile.full_name || userSession.full_name || "";
+                    document.getElementById('profile-email').value = profile.email || userSession.email || "";
+                    document.getElementById('profile-phone').value = profile.phone || "";
+                    document.getElementById('profile-website').value = profile.degree_workplace || "";
+                    document.getElementById('profile-bio').value = profile.bio || "";
+                    document.getElementById('profile-avatar-url').value = profile.avatar_url || "";
+
+                    if (profile.main_crop) {
+                        document.getElementById('profile-main-crop').value = profile.main_crop;
+                    }
+                    if (profile.experience) {
+                        document.getElementById('profile-experience').value = profile.experience;
+                    }
+                    if (profile.avatar_url) {
+                        document.getElementById('profile-avatar-preview').src = profile.avatar_url;
+                        document.getElementById('expert-avatar').src = profile.avatar_url;
+                    }
+                } else {
+                    // Default values if no profile exists
+                    document.getElementById('profile-fullname').value = userSession.full_name || userSession.username || "";
+                    document.getElementById('profile-email').value = userSession.email || "";
+                }
+            } catch (err) {
+                console.error("Lỗi lấy thông tin cá nhân:", err);
+            }
+        }
+
+        // 5. Update user profile to DB
+        async function handleProfileUpdate(event) {
+            event.preventDefault();
+            if (!userSession) {
+                alert("Vui lòng đăng nhập trước khi lưu hồ sơ.");
+                return;
+            }
+
+            const fullName = document.getElementById('profile-fullname').value;
+            const mainCrop = document.getElementById('profile-main-crop').value;
+            const experience = document.getElementById('profile-experience').value;
+            const phone = document.getElementById('profile-phone').value;
+            const website = document.getElementById('profile-website').value;
+            const bio = document.getElementById('profile-bio').value;
+            const avatarUrl = document.getElementById('profile-avatar-url').value;
+
+            const profileData = {
+                user_id: userSession.id,
+                full_name: fullName,
+                email: userSession.email || document.getElementById('profile-email').value,
+                main_crop: mainCrop,
+                experience: experience,
+                phone: phone,
+                degree_workplace: website,
+                bio: bio
+            };
+
+            if (avatarUrl) {
+                profileData.avatar_url = avatarUrl;
+            }
+
+            try {
+                // Gọi trực tiếp Supabase để upsert dữ liệu
+                const { data, error } = await window.supabaseClient
+                    .from('expert_profiles')
+                    .upsert(profileData, { onConflict: 'user_id' })
+                    .select();
+
+                if (error) {
+                    console.error("Supabase Error:", error);
+                    showToast("Lưu hồ sơ thất bại: " + error.message, "error");
+                    return;
+                }
+
+                // Cập nhật cả bảng profiles chung để avatar hiển thị ở ngoài feed
+                const globalProfileData = {
+                    full_name: fullName
+                };
+                if (avatarUrl) {
+                    globalProfileData.avatar_url = avatarUrl;
+                }
+                const { error: pErr } = await window.supabaseClient.from('profiles').update(globalProfileData).eq('id', userSession.id);
+                if (pErr) console.warn("Không thể cập nhật profiles chung:", pErr);
+
+                // Update header UI
+                document.getElementById('expert-name-side').innerText = fullName;
+                document.getElementById('welcome-title').innerText = `Xin chào, ${fullName}!`;
+                if (avatarUrl) {
+                    document.getElementById('expert-avatar').src = avatarUrl;
+                    document.getElementById('profile-avatar-preview').src = avatarUrl;
+                }
+
+                // Sync user object in localStorage
+                const updatedUser = { ...userSession, full_name: fullName, avatar_url: avatarUrl || userSession.avatar_url };
+                localStorage.setItem('agrisocial_user', JSON.stringify(updatedUser));
+                userSession = updatedUser;
+                
+                showToast("Cập nhật hồ sơ chuyên môn thành công!", "success");
+            } catch (err) {
+                showToast("Lỗi kết nối server", "error");
+            }
+        }
+
+        // 6. Verification state handling
+        function getVerificationStatus() {
+            return localStorage.getItem('agrisocial_expert_verification') || 'unverified';
+        }
+
+        function updateVerificationUI() {
+            const status = getVerificationStatus();
+            const badgeSide = document.getElementById('badge-status-side');
+            const badgeTop = document.getElementById('badge-top-ver');
+            const verBanner = document.getElementById('ver-alert-card');
+
+            if (status === 'unverified') {
+                // Sidebar badge
+                badgeSide.className = "px-2 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-extrabold rounded-full tracking-wider uppercase";
+                badgeSide.innerText = "Chưa xác thực";
+
+                // Top header badge
+                badgeTop.className = "px-2 py-0.5 bg-slate-500/20 text-slate-300 text-[10px] font-black rounded-full border border-slate-400/20 uppercase tracking-wider";
+                badgeTop.innerText = "Chưa xác thực";
+
+                // Dashboard banner
+                verBanner.className = "rounded-3xl p-6 border border-amber-200/80 bg-amber-50/40 text-amber-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+                verBanner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0"><i data-lucide="shield-alert" class="w-6 h-6"></i></div>
+                        <div>
+                            <h4 class="font-extrabold text-sm text-amber-900">Nâng cấp mức độ tin cậy chuyên gia</h4>
+                            <p class="text-xs text-amber-800/80">Tài khoản của bạn chưa được phê duyệt. Hãy xác thực chứng chỉ nông nghiệp để kích hoạt huy hiệu xanh lá cây!</p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('verification')" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 transition-colors text-white rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 shadow-md shadow-amber-600/10">Xác minh ngay</button>
+                `;
+            } else if (status === 'pending') {
+                badgeSide.className = "px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-extrabold rounded-full tracking-wider uppercase border border-amber-200";
+                badgeSide.innerText = "Chờ duyệt";
+
+                badgeTop.className = "px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-black rounded-full border border-amber-400/20 uppercase tracking-wider";
+                badgeTop.innerText = "Chờ duyệt";
+
+                verBanner.className = "rounded-3xl p-6 border border-blue-200/80 bg-blue-50/40 text-blue-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+                verBanner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shrink-0"><i data-lucide="clock" class="w-6 h-6 animate-spin"></i></div>
+                        <div>
+                            <h4 class="font-extrabold text-sm text-blue-900">Hồ sơ xác minh đang được thẩm định</h4>
+                            <p class="text-xs text-blue-800/80">Quản trị viên đang tiến hành kiểm tra bằng cấp của bạn. Kết quả sẽ được cập nhật trong vòng 24 giờ tới.</p>
+                        </div>
+                    </div>
+                    <span class="px-4 py-2 bg-blue-100 text-blue-800 border border-blue-200 text-xs font-bold rounded-xl uppercase tracking-wider shrink-0">🕒 Đang thẩm định</span>
+                `;
+
+                // Update Verification upload form to showing status
+                const uploadContainer = document.getElementById('upload-box');
+                if (uploadContainer) {
+                    uploadContainer.className = "border-2 border-solid border-amber-200 bg-amber-50/15 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-4 cursor-pointer hover:bg-amber-50/50 transition-colors";
+                    uploadContainer.onclick = viewSubmittedProfile;
+                    document.getElementById('upload-icon-container').className = "w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl shadow-inner border border-amber-100/50 flex items-center justify-center text-amber-600";
+                    document.getElementById('upload-icon-container').innerHTML = `<i data-lucide="clock" class="w-8 h-8"></i>`;
+                    document.getElementById('upload-status-title').innerText = "Hồ sơ của bạn đã được gửi";
+                    document.getElementById('upload-status-desc').innerText = "Nhấn vào đây để xem lại thông tin đã gửi.";
+                    document.getElementById('submit-verification-btn').style.display = "none";
+                }
+            } else if (status === 'verified') {
+                badgeSide.className = "px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-full tracking-wider uppercase border border-emerald-200";
+                badgeSide.innerText = "Đã xác thực";
+
+                badgeTop.className = "px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black rounded-full border border-emerald-400/20 uppercase tracking-wider";
+                badgeTop.innerText = "Đã xác thực";
+
+                verBanner.className = "rounded-3xl p-6 border border-emerald-200/80 bg-emerald-50/40 text-emerald-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+                verBanner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0"><i data-lucide="shield-check" class="w-6 h-6"></i></div>
+                        <div>
+                            <h4 class="font-extrabold text-sm text-emerald-900">Chúc mừng! Bạn đã là Chuyên gia xác thực</h4>
+                            <p class="text-xs text-emerald-800/80">Hồ sơ năng lực của bạn đã được phê duyệt thành công. Huy hiệu màu xanh lá cây đã được hiển thị trên hệ thống hỏi đáp cộng đồng.</p>
+                        </div>
+                    </div>
+                    <span class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl uppercase tracking-wider shrink-0 flex items-center gap-1"><i data-lucide="award" class="w-4 h-4"></i> Xác thực xanh</span>
+                `;
+
+                // Update Verification upload form showing status
+                const uploadContainer = document.getElementById('upload-box');
+                if (uploadContainer) {
+                    uploadContainer.className = "border-2 border-solid border-emerald-200 bg-emerald-50/15 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-4";
+                    document.getElementById('upload-icon-container').className = "w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-2xl shadow-inner border border-emerald-100/50 flex items-center justify-center text-emerald-600";
+                    document.getElementById('upload-icon-container').innerHTML = `<i data-lucide="shield-check" class="w-8 h-8"></i>`;
+                    document.getElementById('upload-status-title').innerText = "Tài khoản đã xác thực!";
+                    document.getElementById('upload-status-desc').innerText = `Học vị của bạn được xác thực dựa trên chứng chỉ: "${localStorage.getItem('agrisocial_expert_cert_name') || 'Giấy tờ chứng nhận'}"`;
+                    document.getElementById('submit-verification-btn').style.display = "none";
+                }
+            }
+
+            lucide.createIcons();
+        }
+
+        // Upload actions
+        function triggerFileInput() {
+            if (getVerificationStatus() !== 'unverified') return;
+            document.getElementById('cert-file-input').click();
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            selectedFile = file;
+
+            document.getElementById('upload-status-title').innerText = "Đã chọn tài liệu thành công!";
+            document.getElementById('upload-status-desc').innerText = `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) - Nhấp để thay đổi.`;
+            document.getElementById('upload-icon-container').className = "w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/10";
+
+            showToast("Tải ảnh chứng chỉ lên bộ nhớ đệm thành công!", "info");
+        }
+
+        async function submitVerification() {
+            if (getVerificationStatus() !== 'unverified') return;
+
+            const certName = document.getElementById('cert-name').value;
+            if (!selectedFile && !certName) {
+                showToast("Vui lòng nhập tên bằng cấp và tải lên tài liệu minh chứng!", "error");
+                return;
+            }
+
+            const finalCertName = certName || selectedFile.name;
+            const fullName = userSession ? (userSession.full_name || userSession.username || "Chuyên gia") : "Chuyên gia";
+            const userId = userSession ? (userSession.id || userSession.sub) : "unknown";
+            const token = localStorage.getItem('agrisocial_token') || "";
+
+            showToast("Đang gửi yêu cầu...", "info");
+            try {
+                // Use FormData to send image file alongside text data
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                formData.append('full_name', fullName);
+                formData.append('cert_name', finalCertName);
+                if (selectedFile) {
+                    formData.append('cert_image', selectedFile);
+                }
+
+                const res = await fetch('/api/expert/verification', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                        // NOTE: Do NOT set Content-Type here; browser sets it automatically with boundary for FormData
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('agrisocial_expert_verification', 'pending');
+                    localStorage.setItem('agrisocial_expert_cert_name', finalCertName);
+                    showToast("Đã gửi hồ sơ xác minh! Đang chờ quản trị viên phê duyệt.", "success");
+                    updateVerificationUI();
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    showToast("Lỗi từ máy chủ: " + (errData.detail || "Vui lòng thử lại."), "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Không thể kết nối đến máy chủ.", "error");
+            }
+        }
+
+        // 7. Load pending questions from farmer
+        async function loadPendingRequests() {
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/expert-requests?status=pending', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                let requests = await res.json();
+
+                // MOCK DATA Fallback in case no pending requests exist in the Supabase DB
+                // This ensures a 100% successful presentation when showcasing the system!
+                if (!Array.isArray(requests)) {
+                    requests = [];
+                }
+
+                pendingRequests = requests;
+
+                // Update tab notifications badge
+                const badge = document.getElementById('pending-count-badge');
+                if (requests.length > 0) {
+                    badge.innerText = requests.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                // Render left list inside Consultation Tab
+                const listContainer = document.getElementById('consult-requests-container');
+                if (listContainer) {
+                    if (requests.length === 0) {
+                        listContainer.innerHTML = `
+                            <div class="text-center bg-white rounded-3xl p-8 border border-slate-200/60 text-slate-400">
+                                <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500"></i>
+                                <p class="text-sm font-bold">Tất cả sạch sẽ!</p>
+                                <p class="text-xs text-slate-400 mt-1">Không có yêu cầu tư vấn nào đang chờ bạn xử lý.</p>
+                            </div>
+                        `;
+                    } else {
+                        listContainer.innerHTML = requests.map(r => {
+                            const timeAgo = getTimeAgo(new Date(r.created_at));
+                            return `
+                                <div onclick="selectRequest('${r.id}')" id="req-card-${r.id}" class="glass-card rounded-2xl p-4 cursor-pointer border border-slate-200 bg-white relative flex gap-4 overflow-hidden">
+                                    <img src="${r.image_url || 'https://placehold.co/150x150?text=No+Image'}" onerror="this.src='https://placehold.co/150x150?text=No+Image'" class="w-16 h-16 rounded-xl object-cover border shrink-0 bg-slate-50"/>
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold rounded-full border border-emerald-100 uppercase">${getCropName(r)}</span>
+                                            <span class="text-[10px] text-slate-400 font-semibold">${timeAgo}</span>
+                                        </div>
+                                        <h4 class="font-extrabold text-slate-800 text-sm">Gửi bởi: ${r.username || 'Nông dân'}</h4>
+                                        <p class="text-xs text-slate-500 font-medium truncate max-w-[200px]">AI chẩn đoán: ${r.ai_prediction} (${Math.round(r.confidence * 100)}%)</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Render Overview Tab requests list
+                const overviewList = document.getElementById('overview-requests-list');
+                if (overviewList) {
+                    if (requests.length === 0) {
+                        overviewList.innerHTML = `
+                            <div class="text-center py-6 text-slate-400">
+                                <p class="text-sm">Không có yêu cầu tư vấn nào đang chờ.</p>
+                            </div>
+                        `;
+                    } else {
+                        overviewList.innerHTML = requests.slice(0, 3).map(r => {
+                            const timeAgo = getTimeAgo(new Date(r.created_at));
+                            return `
+                                <div class="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors rounded-2xl border border-slate-100/80/80">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${r.image_url || 'https://placehold.co/150x150?text=No+Image'}" onerror="this.src='https://placehold.co/150x150?text=No+Image'" class="w-10 h-10 rounded-lg object-cover bg-slate-200 border"/>
+                                        <div>
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-xs text-slate-800">${r.username || 'Nông dân'}</span>
+                                                <span class="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[8px] font-black rounded border border-emerald-100">${getCropName(r)}</span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-400">AI: ${r.ai_prediction}</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="switchTab('consultations'); selectRequest('${r.id}');" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 transition-colors text-white rounded-lg text-[10px] font-black uppercase tracking-wider">Chẩn đoán</button>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Lỗi tải yêu cầu tư vấn:", err);
+            }
+        }
+
+        // 8. Select a consultation to open workspace
+        function selectRequest(id) {
+            const req = pendingRequests.find(r => r.id === id);
+            if (!req) return;
+            activeRequest = req;
+
+            // Highlight selected card
+            document.querySelectorAll('#consult-requests-container > div').forEach(c => {
+                c.classList.remove('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+            });
+            const selectedCard = document.getElementById('req-card-' + id);
+            if (selectedCard) {
+                selectedCard.classList.add('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+            }
+
+            // Fill workspace Reply Form
+            const workspace = document.getElementById('workspace-container');
+            workspace.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                        <div class="space-y-0.5">
+                            <h3 class="font-extrabold text-slate-800 text-lg">Hồ sơ Bệnh án & Chẩn đoán</h3>
+                            <p class="text-xs text-slate-400">Xem bệnh án và phản hồi phác đồ điều trị tới người nông dân.</p>
+                        </div>
+                        <button onclick="activeRequest = null; loadPendingRequests();" class="p-2 hover:bg-slate-100 rounded-xl text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+
+                    <!-- Disease Details & Image Card -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div class="md:col-span-7 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Người yêu cầu</span>
+                                    <div class="flex items-center gap-3 mt-1"><img src="${req.user_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(req.username || 'nongdan') + '&background=e2e8f0&color=475569'}" class="w-8 h-8 rounded-full object-cover border border-slate-200 bg-slate-100" alt="Avatar"/><div><p class="text-sm font-bold text-slate-800">${req.username || 'Nông dân'}</p><p class="text-[9px] font-semibold text-slate-500">ID: ${req.user_id ? req.user_id.substring(0, 8) : 'unknown'}</p></div></div>
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">AI chẩn đoán</span>
+                                    <p class="text-sm font-bold text-rose-600">${req.ai_prediction} <span class="text-xs text-rose-400">(${Math.round(req.confidence * 100)}%)</span></p>
+                                </div>
+                            </div>
+                            <div class="space-y-1 pt-2 border-t border-slate-200">
+                                <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Mô tả của người dân</span>
+                                <div class="p-3 bg-white border border-slate-200 rounded-xl">
+                                    ${(() => {
+                                        let note = req.user_note || 'Không có mô tả chi tiết.';
+                                        if (note.includes('Tiêu đề:') && note.includes('Nội dung:')) {
+                                            let parts = note.split('Nội dung:');
+                                            let t = parts[0].replace('Tiêu đề:', '').trim();
+                                            let c = parts.slice(1).join('Nội dung:').trim();
+                                            return `<div class="mb-2"><p class="text-[10px] font-bold text-slate-400 mb-0.5">TIÊU ĐỀ:</p><p class="text-sm font-bold text-slate-800 whitespace-pre-wrap break-words">${t}</p></div><div><p class="text-[10px] font-bold text-slate-400 mb-0.5">NỘI DUNG:</p><p class="text-sm font-medium text-slate-700 whitespace-pre-wrap break-words">${c}</p></div>`;
+                                        }
+                                        return `<p class="text-sm text-slate-700 whitespace-pre-wrap font-medium break-words">${note}</p>`;
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:col-span-5 relative overflow-hidden group rounded-xl border border-slate-200 bg-white min-h-[160px] flex items-center justify-center">
+                            <img src="${req.image_url || 'https://placehold.co/400x300?text=No+Image'}" onerror="this.src='https://placehold.co/400x300?text=No+Image'" class="absolute inset-0 w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform" onclick="zoomImage(this.src)"/>
+                            <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-bold text-white uppercase tracking-wider pointer-events-none">Nhấp để phóng to</div>
+                        </div>
+                    </div>
+
+                    <!-- Diagnosis Form -->
+                    <form onsubmit="submitExpertResponse(event)" class="space-y-4">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Chẩn đoán Chuyên môn (Tên bệnh)</label>
+                            <input type="text" id="resp-diagnosis" required placeholder="Ví dụ: Bệnh đạo ôn cổ bông hại lúa do nấm Pyricularia oryzae" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800"/>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider">Phác đồ điều trị & Thuốc đề nghị</label>
+                            <textarea id="resp-treatment" required rows="5" placeholder="Mô tả kỹ thuật xử lý (cách ly lá bệnh, giữ nước ruộng ổn định...) và danh mục các loại thuốc đề nghị phun trừ (như tricyclazole, fenoxanil...) kèm liều lượng cụ thể..." class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-semibold text-slate-800"></textarea>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl hover:shadow-lg transition-all font-bold text-sm">
+                                <i data-lucide="send" class="w-4.5 h-4.5"></i>
+                                <span>Gửi phản hồi chuyên gia</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // 9. Send diagnostic response to backend
+        async function submitExpertResponse(event) {
+            event.preventDefault();
+            if (!activeRequest || !userSession) return;
+
+            const diagnosis = document.getElementById('resp-diagnosis').value;
+            const treatment = document.getElementById('resp-treatment').value;
+            const token = localStorage.getItem('agrisocial_token');
+
+            const payload = {
+                request_id: activeRequest.id,
+                expert_id: userSession.id,
+                diagnosis: diagnosis,
+                treatment: treatment
+            };
+
+            try {
+                const res = await fetch('/api/expert-response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (result.success || res.status === 200) {
+                    showToast("Đã gửi phác đồ chẩn đoán thành công!", "success");
+
+                    // Reset selected active request
+                    activeRequest = null;
+
+                    // Reset workspace container to empty
+                    const workspace = document.getElementById('workspace-container');
+                    workspace.innerHTML = `
+                        <div class="text-center py-20 text-slate-400 flex flex-col items-center justify-center gap-4">
+                            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                                <i data-lucide="file-signature" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-slate-700">Không gian làm việc</h4>
+                                <p class="text-xs text-slate-400 max-w-xs mx-auto mt-1">Vui lòng chọn một yêu cầu tư vấn ở danh sách bên trái để tiến hành chuẩn đoán dịch bệnh cây trồng.</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Reload statistics and list
+                    loadStats();
+                    loadPendingRequests();
+                } else {
+                    showToast("Có lỗi xảy ra: " + (result.error || ""), "error");
+                }
+            } catch (err) {
+                showToast("Lỗi kết nối máy chủ", "error");
+            }
+        }
+
+        // 10. Zoom photo modal
+        function zoomImage(src) {
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('modal-zoom-image');
+            img.src = src;
+            modal.classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+        }
+
+        async function viewSubmittedProfile() {
+            if (!userSession) return;
+            const token = localStorage.getItem('agrisocial_token');
+            const userId = userSession.id || userSession.sub;
+            try {
+                const res = await fetch('/api/expert/verifications/user/' + userId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await res.json();
+                if (result.success && result.data) {
+                    document.getElementById('submitted-cert-name-text').innerText = result.data.cert_name || 'Không có tên';
+                    document.getElementById('submitted-cert-img').src = result.data.cert_image_url || '';
+                    document.getElementById('submitted-profile-modal').classList.remove('hidden');
+                } else {
+                    showToast("Không tìm thấy thông tin hồ sơ", "error");
+                }
+            } catch(e) {
+                showToast("Lỗi kết nối khi tải hồ sơ", "error");
+            }
+        }
+
+        function closeSubmittedProfileModal() {
+            document.getElementById('submitted-profile-modal').classList.add('hidden');
+        }
+
+        function closeExpertRatingsModal() {
+            document.getElementById('expert-ratings-modal').classList.add('hidden');
+        }
+
+        async function openExpertRatingsModal() {
+            if (!userSession) return;
+            document.getElementById('expert-ratings-modal').classList.remove('hidden');
+            const container = document.getElementById('expert-ratings-container');
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 font-medium text-sm">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+                Đang tải đánh giá...
+            </div>`;
+            if (window.lucide) lucide.createIcons();
+
+            const token = localStorage.getItem('agrisocial_token');
+            const userId = userSession.id || userSession.sub;
+
+            try {
+                const res = await fetch('/api/expert-responses/user/' + userId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                let responses = await res.json();
+                
+                if (!Array.isArray(responses)) {
+                    console.error("API Error:", responses);
+                    throw new Error(responses.error || "Invalid response format");
+                }
+                
+                // Filter only responses that have a rating
+                responses = responses.filter(r => r.rating);
+                
+                if (responses && responses.length > 0) {
+                    container.innerHTML = '';
+                    responses.forEach(r => {
+                        const reqInfo = r.request_info || {};
+                        const dateStr = getTimeAgo(new Date(r.created_at));
+                        
+                        const item = document.createElement('div');
+                        item.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow";
+                        
+                        const starsHtml = Array.from({length: 5}).map((_, i) => `<i data-lucide="star" class="w-4 h-4 ${i < r.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}"></i>`).join('');
+                        
+                        item.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <img src="${reqInfo.user_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(reqInfo.username || 'nongdan') + '&background=e2e8f0&color=475569'}" class="w-10 h-10 rounded-full border border-slate-200 object-cover bg-slate-50" />
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-800">${reqInfo.username || 'Nông dân'}</h4>
+                                        <p class="text-[10px] font-semibold text-slate-400">${dateStr}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-0.5">
+                                    ${starsHtml}
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <span class="font-bold text-slate-500 mb-1 block">Tư vấn của bạn:</span>
+                                <span class="font-semibold">${r.diagnosis || 'Không ghi nhận'}</span>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                    if (window.lucide) lucide.createIcons();
+                } else {
+                    container.innerHTML = `<div class="text-center py-10 text-slate-400 font-medium text-sm">Chưa có ai đánh giá bạn.</div>`;
+                }
+            } catch (err) {
+                console.error("Lỗi tải đánh giá:", err);
+                container.innerHTML = `<div class="text-center py-10 text-rose-500 font-medium text-sm">Lỗi kết nối. Vui lòng thử lại!</div>`;
+            }
+        }
+
+        async function openResolvedRequestsModal() {
+            if (!userSession) return;
+            document.getElementById('resolved-requests-modal').classList.remove('hidden');
+            const container = document.getElementById('resolved-requests-container');
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 font-medium text-sm">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+                Đang tải danh sách...
+            </div>`;
+            if (window.lucide) lucide.createIcons();
+
+            const token = localStorage.getItem('agrisocial_token');
+            const userId = userSession.id || userSession.sub;
+
+            try {
+                const res = await fetch('/api/expert-responses/user/' + userId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const responses = await res.json();
+                
+                if (responses && responses.length > 0) {
+                    container.innerHTML = '';
+                    responses.forEach(r => {
+                        const reqInfo = r.request_info || {};
+                        const dateStr = getTimeAgo(new Date(r.created_at));
+                        
+                        const item = document.createElement('div');
+                        item.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4";
+                        
+                        item.innerHTML = `
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div class="flex items-center gap-3">
+                                    <img src="${reqInfo.user_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(reqInfo.username || 'nongdan') + '&background=e2e8f0&color=475569'}" class="w-10 h-10 rounded-full border border-slate-200 object-cover bg-slate-50" />
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-800">${reqInfo.username || 'Nông dân'}</h4>
+                                        <p class="text-[10px] font-semibold text-slate-400">Yêu cầu lúc: ${reqInfo.created_at ? new Date(reqInfo.created_at).toLocaleString('vi-VN') : 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold whitespace-nowrap">Đã giải đáp ${dateStr}</span>
+                                    ${r.rating ? `<div class="flex items-center text-amber-400">
+                                        <span class="text-xs font-bold mr-1 text-slate-600">Đánh giá:</span>
+                                        ${Array.from({length: 5}).map((_, i) => `<i data-lucide="star" class="w-3.5 h-3.5 ${i < r.rating ? 'fill-amber-400' : 'text-slate-200'}"></i>`).join('')}
+                                    </div>` : `<span class="text-[10px] text-slate-400 font-medium">Chưa đánh giá</span>`}
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Thông tin từ Nông dân & AI</span>
+                                    ${reqInfo.image_url ? `<img src="${reqInfo.image_url}" class="w-full h-32 object-cover rounded-lg border border-slate-200 cursor-zoom-in" onclick="zoomImage('${reqInfo.image_url}')" />` : ''}
+                                    
+                                    <div>
+                                        ${(() => {
+                                            let note = reqInfo.user_note || 'Không có mô tả';
+                                            if (note.includes('Tiêu đề:') && note.includes('Nội dung:')) {
+                                                let parts = note.split('Nội dung:');
+                                                let t = parts[0].replace('Tiêu đề:', '').trim();
+                                                let c = parts.slice(1).join('Nội dung:').trim();
+                                                return `<div class="mb-2"><p class="text-xs font-bold text-slate-500 mb-1">Tiêu đề:</p><p class="text-sm font-semibold text-slate-800 bg-white p-2 rounded-lg border border-slate-200 break-words">${t}</p></div><div><p class="text-xs font-bold text-slate-500 mb-1">Nội dung:</p><p class="text-sm font-semibold text-slate-700 bg-white p-2 rounded-lg border border-slate-200 break-words">${c}</p></div>`;
+                                            }
+                                            return `<p class="text-xs font-bold text-slate-500 mb-1">Mô tả của nông dân:</p><p class="text-sm font-semibold text-slate-700 bg-white p-2 rounded-lg border border-slate-200 break-words">${note}</p>`;
+                                        })()}
+                                    </div>
+                                    
+                                    <div class="inline-flex items-center gap-1.5 px-2 py-1 bg-rose-50 text-rose-700 rounded-md border border-rose-100">
+                                        <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+                                        <span class="text-xs font-bold">AI dự đoán: ${reqInfo.ai_prediction || 'N/A'}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-3 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100/50">
+                                    <span class="text-[10px] font-black uppercase text-emerald-600 tracking-wider">Chẩn đoán của bạn</span>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-500 mb-1">Bệnh lý / Vấn đề:</p>
+                                        <p class="text-sm font-semibold text-slate-800 bg-white p-2 rounded-lg border border-slate-200 break-words">${r.diagnosis || 'Không ghi nhận'}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-500 mb-1">Phác đồ điều trị:</p>
+                                        <p class="text-sm font-semibold text-slate-800 bg-white p-2 rounded-lg border border-slate-200 break-words">${r.treatment || 'Không ghi nhận'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                    if (window.lucide) lucide.createIcons();
+                } else {
+                    container.innerHTML = `<div class="text-center py-10 text-slate-400 font-medium text-sm">Chưa có yêu cầu nào được giải đáp.</div>`;
+                }
+            } catch(e) {
+                container.innerHTML = `<div class="text-center py-10 text-rose-500 font-medium text-sm">Lỗi tải dữ liệu. Vui lòng thử lại.</div>`;
+            }
+        }
+
+        function closeResolvedRequestsModal() {
+            document.getElementById('resolved-requests-modal').classList.add('hidden');
+        }
+
+        // 11. Custom utility to display time
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return "vừa xong";
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + " phút trước";
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + " giờ trước";
+            return Math.floor(hours / 24) + " ngày trước";
+        }
+
+        // 12. Toast notifications
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let icon = "check-circle";
+            let borderClass = "border-emerald-500 bg-emerald-50 text-emerald-800";
+            if (type === "error") {
+                icon = "alert-triangle";
+                borderClass = "border-rose-500 bg-rose-50 text-rose-800";
+            } else if (type === "info") {
+                icon = "info";
+                borderClass = "border-blue-500 bg-blue-50 text-blue-800";
+            } else if (type === "warning") {
+                icon = "shield-alert";
+                borderClass = "border-amber-500 bg-amber-50 text-amber-800";
+            }
+
+            toast.className = `toast-animate px-5 py-4 border-l-4 rounded-2xl shadow-xl flex items-center gap-3 min-w-[280px] ${borderClass} font-semibold text-xs`;
+            toast.innerHTML = `
+                <i data-lucide="${icon}" class="w-5 h-5 shrink-0"></i>
+                <span class="flex-1">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('toast-animate');
+                toast.classList.add('transition-all', 'duration-300', 'opacity-0', 'translate-x-12');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        async function handleLogout() {
+            if (window.supabaseClient && window.supabaseClient.auth) {
+                try { await window.supabaseClient.auth.signOut(); } catch (e) { }
+            }
+            localStorage.removeItem('agrisocial_token');
+            localStorage.removeItem('agrisocial_user');
+            // do not clear all to keep local verifications for demo
+            showToast("Đang đăng xuất...", "info");
+            setTimeout(() => window.location.href = 'index.html', 1000);
+        }
+
+        // 13. Xử lý ảnh đại diện
+        async function handleAvatarSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('avatar-upload-menu').classList.add('hidden');
+            showToast("Đang tải ảnh lên máy chủ...", "info");
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${userSession.id}-${Date.now()}.${fileExt}`;
+                const filePath = `avatars/${fileName}`;
+
+                const { data, error } = await window.supabaseClient.storage
+                    .from('crop-images')
+                    .upload(filePath, file, { upsert: true });
+
+                if (error) throw error;
+
+                const { data: publicData } = window.supabaseClient.storage
+                    .from('crop-images')
+                    .getPublicUrl(filePath);
+
+                const publicUrl = publicData.publicUrl;
+
+                // Update UI
+                document.getElementById('profile-avatar-preview').src = publicUrl;
+                document.getElementById('expert-avatar').src = publicUrl;
+                document.getElementById('profile-avatar-url').value = publicUrl;
+
+                showToast("Đổi ảnh đại diện thành công! Nhấn 'Lưu thay đổi hồ sơ' để hoàn tất.", "success");
+            } catch (err) {
+                console.error("Lỗi tải ảnh:", err);
+                showToast("Tải ảnh thất bại: " + err.message, "error");
+            }
+        }
+
+        function removeAvatar(event) {
+            event.stopPropagation();
+            document.getElementById('avatar-upload-menu').classList.add('hidden');
+            
+            const defaultUrl = `https://ui-avatars.com/api/?name=${userSession ? userSession.full_name || 'Expert' : 'Expert'}&background=10b981&color=fff`;
+            document.getElementById('profile-avatar-preview').src = defaultUrl;
+            document.getElementById('expert-avatar').src = defaultUrl;
+            document.getElementById('profile-avatar-url').value = '';
+            
+            showToast("Đã xóa ảnh tạm thời. Nhấn 'Lưu thay đổi hồ sơ' để áp dụng.", "info");
+        }
+    </script>
+</body>
+
+</html>

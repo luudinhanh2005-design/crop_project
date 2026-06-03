@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đang đăng nhập...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8faf8;
+            color: #191c1b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #abf4ac;
+            border-top: 5px solid #0d631b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2 {
+            margin: 0 0 10px 0;
+            color: #0d631b;
+        }
+        p {
+            color: #40493d;
+            margin: 0;
+        }
+        .error-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #0d631b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="spinner"></div>
+    <h2 id="status-title">Đang xác thực tài khoản</h2>
+    <p id="status-desc">Vui lòng đợi trong giây lát, hệ thống đang chuyển hướng bạn về ứng dụng Agrisocial...</p>
+
+    <script>
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token=')) {
+            // Thay thế dấu '#' bằng '?' để tránh việc Android Intent nuốt mất hash fragment
+            const queryStr = hash.replace('#', '?');
+            const redirectTarget = "agrisocial://login-callback" + queryStr;
+            
+            console.log("Redirecting to app via deep link:", redirectTarget);
+            
+            // Chuyển hướng về app qua Custom URI Scheme
+            window.location.href = redirectTarget;
+
+            // Đề phòng trường hợp chuyển hướng không tự động kích hoạt
+            setTimeout(() => {
+                document.getElementById('status-title').innerText = "Đồng bộ hoàn tất";
+                document.getElementById('status-desc').innerHTML = `
+                    Nếu ứng dụng không tự động mở, vui lòng bấm vào nút bên dưới:
+                    <br><br>
+                    <a href="${redirectTarget}" class="error-btn">Quay lại Ứng dụng</a>
+                `;
+            }, 1500);
+        } else {
+            console.error("No access_token found in URL hash:", hash);
+            document.getElementById('status-title').innerText = "Không thể xác thực";
+            document.getElementById('status-title').style.color = "#ba1a1a";
+            document.getElementById('status-desc').innerHTML = `
+                Không tìm thấy thông tin đăng nhập trong URL.
+                <br><br>
+                <a href="/" class="error-btn">Về trang chủ</a>
+            `;
+            const spinner = document.querySelector('.spinner');
+            if (spinner) spinner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

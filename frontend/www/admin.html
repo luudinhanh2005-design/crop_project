@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AgriSocial Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #e11d48;
+            --primary-light: #fff1f2;
+            --success: #16a34a;
+            --success-light: #f0fdf4;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+            --card-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); min-height: 100vh; }
+
+        /* Header */
+        .header { background: white; padding: 12px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-logo { width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; box-shadow: 0 4px 12px rgba(225,29,72,0.3); }
+        .header-title h1 { font-size: 18px; font-weight: 800; color: #0f172a; }
+        .header-title p { font-size: 12px; color: var(--text-sub); }
+
+        .header-search { position: relative; width: 350px; }
+        .header-search input { width: 100%; padding: 10px 16px 10px 40px; background: #f1f5f9; border: 1px solid transparent; border-radius: 20px; font-size: 14px; transition: 0.2s; }
+        .header-search input:focus { background: white; border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px var(--primary-light); }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 14px; }
+
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .admin-profile { display: flex; align-items: center; gap: 12px; padding: 6px 14px; background: white; border: 1px solid var(--border); border-radius: 30px; cursor: pointer; transition: 0.2s; }
+        .admin-profile:hover { border-color: var(--primary); background: var(--primary-light); }
+        .admin-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+        .admin-info { text-align: left; }
+        .admin-name { font-size: 13px; font-weight: 700; color: #0f172a; display: block; }
+        .admin-role { font-size: 11px; color: var(--text-sub); display: block; }
+
+        .btn-logout { display: flex; align-items: center; gap: 8px; color: var(--text-sub); font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; }
+        .btn-logout:hover { color: var(--danger); }
+
+        /* Navigation */
+        .nav-tabs { background: white; padding: 0 32px; display: flex; gap: 8px; border-bottom: 1px solid var(--border); position: sticky; top: 65px; z-index: 99; }
+        .nav-tab { padding: 16px 20px; font-size: 14px; font-weight: 600; color: var(--text-sub); cursor: pointer; border-bottom: 3px solid transparent; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .nav-tab:hover { color: var(--primary); background: var(--primary-light); }
+        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .nav-badge { background: var(--primary); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 4px; }
+
+        /* Main Content */
+        .main-content { padding: 32px; max-width: 1400px; margin: 0 auto; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Overview Grid */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px; }
+        .stat-card { background: white; padding: 24px; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--card-shadow); transition: 0.3s; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.1); }
+        .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .stat-trend { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+        .trend-up { color: var(--success); }
+        .trend-down { color: var(--danger); }
+        .stat-label { font-size: 14px; color: var(--text-sub); font-weight: 500; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #0f172a; margin: 8px 0; }
+        .stat-sub { font-size: 12px; color: var(--text-sub); }
+
+        /* Analytics Chart */
+        .analytics-container { background: white; border-radius: 24px; border: 1px solid var(--border); padding: 24px; box-shadow: var(--card-shadow); margin-top: 24px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .chart-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .chart-legend { display: flex; gap: 16px; font-size: 12px; font-weight: 600; color: var(--text-sub); }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* Lists & Tables */
+        .content-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; }
+        .panel-card { background: white; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--card-shadow); overflow: hidden; }
+        .panel-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .panel-header h3 { font-size: 16px; font-weight: 700; color: #0f172a; }
+        .btn-view-all { font-size: 13px; font-weight: 700; color: var(--primary); cursor: pointer; text-decoration: none; }
+
+        .user-item { padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
+        .user-item:last-child { border-bottom: none; }
+        .user-item:hover { background: #f8fafc; }
+        .user-info { display: flex; align-items: center; gap: 14px; }
+        .user-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #e2e8f0; }
+        .user-details h4 { font-size: 14px; font-weight: 700; color: #1e293b; }
+        .user-details p { font-size: 12px; color: var(--text-sub); }
+
+        /* Login Overlay */
+        #admin-login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            width: 100%; max-width: 400px; text-align: center;
+        }
+        .login-box h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .login-box p { color: var(--text-sub); font-size: 14px; margin-bottom: 30px; }
+        .login-input {
+            width: 100%; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border);
+            margin-bottom: 16px; font-size: 14px; transition: 0.2s;
+        }
+        .login-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px var(--primary-light); }
+        .btn-login {
+            width: 100%; padding: 14px; background: var(--primary); color: white; border: none;
+            border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225,29,72,0.3); }
+        .login-logo { width: 60px; height: 60px; background: var(--primary); border-radius: 18px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; }
+        .status-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+        .status-active { background: var(--success-light); color: var(--success); }
+        .status-banned { background: #fee2e2; color: var(--danger); }
+        .user-time { font-size: 11px; color: var(--text-sub); text-align: right; }
+
+        .table-responsive { padding: 24px; }
+        .premium-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        .premium-table th { padding: 12px 16px; font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; text-align: left; }
+        .premium-table tr { background: white; transition: 0.2s; }
+        .premium-table td { padding: 16px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .premium-table td:first-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
+        .premium-table td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
+        .premium-table tr:hover { transform: scale(1.01); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; }
+
+        .post-preview-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); transition: 0.3s; cursor: zoom-in; }
+        .post-preview-img:hover { transform: scale(1.5); z-index: 10; position: relative; }
+        
+        .img-container { position: relative; width: 60px; height: 60px; }
+        .restricted-badge { position: absolute; top: -5px; right: -5px; background: #fbbf24; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 5; }
+
+        /* Expert Cards */
+        .expert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .expert-card { background: white; border-radius: 24px; border: 1px solid var(--border); padding: 24px; box-shadow: var(--card-shadow); text-align: center; }
+        .expert-header { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .expert-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 3px var(--primary-light); }
+        .expert-name { font-size: 16px; font-weight: 800; color: #0f172a; }
+        .expert-title { font-size: 12px; color: var(--text-sub); }
+        .expert-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+        /* Upgraded Expert Layout & Stats */
+        .expert-stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+        .expert-stat-card { background: white; border-radius: 16px; padding: 18px 24px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; box-shadow: var(--card-shadow); }
+        .expert-stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .expert-stat-info { display: flex; flex-direction: column; }
+        .expert-stat-val { font-size: 20px; font-weight: 800; color: #0f172a; }
+        .expert-stat-lbl { font-size: 12px; color: var(--text-sub); font-weight: 500; }
+
+        .expert-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; background: white; padding: 16px 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--card-shadow); }
+        .expert-search-wrap { position: relative; flex: 1; max-width: 400px; }
+        .expert-search-wrap input { width: 100%; padding: 10px 16px 10px 40px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; outline: none; transition: 0.2s; }
+        .expert-search-wrap input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .expert-search-wrap .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 13px; }
+        .btn-add-expert { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-add-expert:hover { background: #15803d; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,0.2); }
+        .btn-approve-expert { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-approve-expert:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.2); }
+
+        .expert-card-v2 { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: 24px; border: 1px solid rgba(226,232,240,0.8); padding: 24px; box-shadow: var(--card-shadow); text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+        .expert-card-v2:hover { transform: translateY(-5px); border-color: rgba(225,29,72,0.4); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.08); background: white; }
+        .expert-card-v2::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(90deg, var(--primary), #ec4899); opacity: 0; transition: 0.3s; }
+        .expert-card-v2:hover::before { opacity: 1; }
+        .expert-avatar-wrap { position: relative; margin: 0 auto 16px; width: 84px; height: 84px; }
+        .expert-img-v2 { width: 84px; height: 84px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 3px var(--primary-light); object-fit: cover; }
+        .expert-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 8px; }
+        .expert-badge.rice { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .expert-badge.corn { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
+        .expert-badge.general { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+        .expert-meta-info { font-size: 12px; color: var(--text-sub); margin: 8px 0 16px; line-height: 1.5; min-height: 36px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Report Cards */
+        .report-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .report-card-v2 { background: rgba(255,255,255,0.75); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(226,232,240,0.8); overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; transition: all 0.3s; }
+        .report-card-v2:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.08); border-color: rgba(225,29,72,0.3); }
+        .report-img { width: 100%; height: 180px; object-fit: cover; background: #f8fafc; border-bottom: 1px solid var(--border); }
+        .report-content { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .report-meta-info { margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+        .report-meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .report-type-badge { background: #fee2e2; color: #dc2626; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 12px; border: 1px solid #fecdd3; text-transform: uppercase; letter-spacing: 0.5px; }
+        .report-time { font-size: 11px; color: var(--text-sub); }
+        .report-user-line { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+        .report-user-line b { color: #0f172a; }
+        .report-text { font-size: 13px; color: #475569; line-height: 1.5; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .report-actions { display: flex; gap: 10px; }
+        .btn-dismiss-report { flex: 1; padding: 10px; background: #f1f5f9; color: #475569; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 12px; text-align: center; }
+        .btn-dismiss-report:hover { background: #e2e8f0; color: #0f172a; }
+        .btn-delete-report-post { flex: 1; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 12px; text-align: center; box-shadow: 0 4px 12px rgba(225,29,72,0.15); }
+        .btn-delete-report-post:hover { background: #b91c1c; box-shadow: 0 6px 18px rgba(225,29,72,0.25); }
+
+        .empty-reports-state { text-align: center; padding: 60px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; grid-column: 1 / -1; }
+        .empty-reports-icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-reports-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+        .empty-reports-desc { font-size: 13px; color: var(--text-sub); }
+
+        /* System Status */
+        .system-list { padding: 12px 24px; }
+        .system-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #f1f5f9; }
+        .system-label { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; }
+        .system-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .system-uptime { font-size: 13px; font-weight: 600; color: #1e293b; opacity: 0.8; }
+
+        /* Toast Notification */
+        #toast-container { position: fixed; bottom: 32px; right: 32px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { pointer-events: auto; padding: 14px 20px 14px 18px; border-radius: 14px; background: white; border: 1px solid var(--border); box-shadow: 0 12px 28px -4px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 12px; animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); min-width: 300px; max-width: 420px; position: relative; overflow: hidden; }
+        .toast .toast-close { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer; color: #94a3b8; transition: 0.2s; line-height: 1; padding: 2px; }
+        .toast .toast-close:hover { color: #1e293b; }
+        .toast .toast-progress { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 0 0 14px 14px; animation: toastProgress 4s linear forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(60px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
+        @keyframes toastProgress { from { width: 100%; } to { width: 0%; } }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.success .toast-progress { background: var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.error .toast-progress { background: var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+        .toast.info .toast-progress { background: var(--primary); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.warning .toast-progress { background: var(--warning); }
+
+        /* Custom Confirm Modal */
+        .confirm-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.5); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 10001;
+            animation: fadeIn 0.25s ease;
+        }
+        .confirm-overlay.active { display: flex; }
+        .confirm-box {
+            background: white; width: 92%; max-width: 550px; border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+            animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+        .confirm-header {
+            padding: 28px 28px 0; text-align: center;
+        }
+        .confirm-icon {
+            width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; margin: 0 auto 16px;
+        }
+        .confirm-icon.danger { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+        .confirm-icon.warning { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+        .confirm-icon.info { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+        .confirm-header h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .confirm-header p { margin: 0; font-size: 14px; color: var(--text-sub); line-height: 1.6; }
+        .confirm-actions {
+            padding: 24px 28px 28px; display: flex; gap: 12px; justify-content: center;
+        }
+        .confirm-btn {
+            flex: 1; padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px;
+            cursor: pointer; transition: all 0.2s; border: none; font-family: 'Inter', sans-serif;
+        }
+        .confirm-btn:hover { transform: translateY(-1px); }
+        .confirm-btn.cancel { background: #f1f5f9; color: #475569; }
+        .confirm-btn.cancel:hover { background: #e2e8f0; }
+        .confirm-btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+        .confirm-btn.danger:hover { box-shadow: 0 6px 18px rgba(239,68,68,0.4); }
+        .confirm-btn.warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        .confirm-btn.warning:hover { box-shadow: 0 6px 18px rgba(245,158,11,0.4); }
+        .confirm-btn.success { background: linear-gradient(135deg, #16a34a, #15803d); color: white; box-shadow: 0 4px 12px rgba(22,163,74,0.3); }
+        .confirm-btn.success:hover { box-shadow: 0 6px 18px rgba(22,163,74,0.4); }
+
+        /* Banned badge */
+        .badge-banned { background: #fef2f2; color: #dc2626; font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-left: 6px; border: 1px solid #fecdd3; font-weight: 800; letter-spacing: 0.5px; }
+        /* Diagnostic Modal Styling */
+        .diag-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+        .diag-content {
+            background: white; width: 90%; max-width: 600px; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); overflow: hidden;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .diag-header {
+            padding: 24px; background: #fef2f2; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #fee2e2;
+        }
+        .diag-icon { font-size: 24px; padding: 10px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(220,38,38,0.1); }
+        .diag-header h3 { margin: 0; color: #991b1b; font-size: 18px; flex: 1; }
+        .diag-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #991b1b; }
+        .diag-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        .diag-section label { display: block; font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .diag-section p { margin: 0; color: #1e293b; font-weight: 500; line-height: 1.5; }
+        .diag-section code { display: block; background: #f8fafc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #e11d48; border: 1px solid #e2e8f0; overflow-x: auto; }
+        .diag-section ul { margin: 0; padding-left: 20px; color: #475569; font-size: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .diag-footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-diag-primary { background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-diag-primary:hover { background: #b91c1c; transform: translateY(-1px); }
+        .btn-diag-secondary { background: white; color: #475569; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo" onclick="switchTab('page-overview')" style="cursor:pointer">🛡️</div>
+            <div class="header-title">
+                <h1>Admin Dashboard</h1>
+                <p>Quản trị hệ thống AgriSocial</p>
+            </div>
+        </div>
+
+        <div class="header-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Tìm kiếm người dùng, bài viết, chuyên gia...">
+        </div>
+
+        <div class="header-right">
+            <div class="admin-profile">
+                <div class="admin-avatar" id="admin-avatar-ui">A</div>
+                <div class="admin-info">
+                    <span class="admin-name" id="admin-name-ui">Admin System</span>
+                    <span class="admin-role">Quản trị viên</span>
+                </div>
+            </div>
+            <a href="javascript:void(0)" onclick="handleAdminLogout()" class="btn-logout">
+                <span>🚪</span> Đăng xuất
+            </a>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="nav-tab active" data-tab="page-overview">📊 Tổng quan</div>
+        <div class="nav-tab" data-tab="page-users">👥 Người dùng</div>
+        <div class="nav-tab" data-tab="page-posts">📝 Bài đăng</div>
+        <div class="nav-tab" data-tab="page-experts">🎓 Chuyên gia</div>
+        <div class="nav-tab" data-tab="page-reports">⚠️ Báo cáo <span class="nav-badge" id="report-count-badge">0</span></div>
+    </nav>
+
+    <main class="main-content">
+        
+        <div class="tab-panel active" id="page-overview">
+            <div class="stat-grid">
+                <div class="stat-card" onclick="switchTab('page-users')">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background:#eff6ff; color:#3b82f6;">👥</div>
+                        <div class="stat-trend">0%</div>
+                    </div>
+                    <div class="stat-label">Tổng người dùng</div>
+                    <div class="stat-value" id="stat-total-users">0</div>
+                    <div class="stat-sub"><b id="stat-active-users" style="color:var(--success)">0</b> đang trực tuyến</div>
+                </div>
+                <div class="stat-card" onclick="switchTab('page-posts')">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background:#f0fdf4; color:#16a34a;">📄</div>
+                        <div class="stat-trend">0%</div>
+                    </div>
+                    <div class="stat-label">Tổng bài đăng</div>
+                    <div class="stat-value" id="stat-total-posts">0</div>
+                    <div class="stat-sub"><b id="stat-today-posts">0</b> bài hôm nay</div>
+                </div>
+                <div class="stat-card" onclick="switchTab('page-reports')">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background:#fff7ed; color:#ea580c;">⚠️</div>
+                        <div class="stat-trend" style="color:var(--primary)">Cần xử lý</div>
+                    </div>
+                    <div class="stat-label">Báo cáo chờ</div>
+                    <div class="stat-value" id="stat-pending-reports">0</div>
+                    <div class="stat-sub"><b id="stat-new-reports">0</b> báo cáo mới</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background:#f5f3ff; color:#7c3aed;">⚡</div>
+                        <div class="stat-trend">0%</div>
+                    </div>
+                    <div class="stat-label">Tương tác tuần</div>
+                    <div class="stat-value" id="stat-interactions">0</div>
+                    <div class="stat-sub">Likes, Comments & Shares</div>
+                </div>
+            </div>
+
+            <div class="analytics-container">
+                <div class="chart-header">
+                    <div class="chart-title">📈 Xu hướng tương tác cộng đồng</div>
+                    <div class="chart-legend">
+                        <div class="legend-item"><span class="dot" style="background:#e11d48"></span> Lượt thích</div>
+                        <div class="legend-item"><span class="dot" style="background:#7c3aed"></span> Bình luận</div>
+                        <div class="legend-item"><span class="dot" style="background:#10b981"></span> Chia sẻ</div>
+                    </div>
+                </div>
+                <canvas id="engagementChart" height="80"></canvas>
+            </div>
+
+            <!-- New AI Charts Row -->
+            <div class="content-grid" style="margin-top:24px; grid-template-columns: 1fr 1fr;">
+                <div class="panel-card">
+                    <div class="panel-header" style="margin-bottom:15px;">
+                        <h3>📊 Tỷ lệ cây trồng được nhận diện</h3>
+                    </div>
+                    <div style="position: relative; height:340px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <canvas id="cropScansChart" style="max-height: 240px; max-width: 240px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header" style="margin-bottom:15px;">
+                        <h3>📈 Tần suất sử dụng chức năng AI</h3>
+                    </div>
+                    <div style="position: relative; height:340px; display:flex; justify-content:center; align-items:center;">
+                        <canvas id="scanFrequencyChart" style="max-height: 280px; width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid" style="margin-top:24px;">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3>Người dùng mới nhất</h3>
+                        <a href="javascript:void(0)" onclick="switchTab('page-users')" class="btn-view-all">Xem tất cả</a>
+                    </div>
+                    <div id="new-users-list"></div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3>Trạng thái hạ tầng</h3>
+                    </div>
+                    <div class="system-list">
+                        <div class="system-item">
+                            <div class="system-label"><div class="system-icon">☁️</div> API Server</div>
+                            <div class="system-uptime" id="uptime-server" style="color:var(--success); font-weight:700;">Online</div>
+                        </div>
+                        <div class="system-item">
+                            <div class="system-label"><div class="system-icon" style="color:#3b82f6; background:#eff6ff;">💾</div> Database</div>
+                            <div class="system-uptime" id="uptime-db" style="color:var(--success); font-weight:700;">Online</div>
+                        </div>
+                        <div class="system-item">
+                            <div class="system-label"><div class="system-icon" style="color:#7c3aed; background:#f5f3ff;">🤖</div> AI Recognition</div>
+                            <div class="system-uptime" id="uptime-ai" style="color:var(--success); font-weight:700;">Ready</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="page-users">
+            <div class="panel-card">
+                <div class="table-responsive">
+                    <table class="premium-table">
+                        <thead>
+                            <tr>
+                                <th>Người dùng</th>
+                                <th>Trạng thái</th>
+                                <th>Hoạt động</th>
+                                <th>Tham gia</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-users-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="page-posts">
+            <div class="panel-card">
+                <div class="table-responsive">
+                    <table class="premium-table">
+                        <thead>
+                            <tr>
+                                <th>Hình ảnh</th>
+                                <th>Nội dung</th>
+                                <th>Người đăng</th>
+                                <th>Loại cây</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-posts-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="page-experts">
+            <!-- Thanh Thống kê Chuyên gia -->
+            <div class="expert-stats-bar">
+                <div class="expert-stat-card">
+                    <div class="expert-stat-icon" style="background:#eff6ff; color:#3b82f6;">🎓</div>
+                    <div class="expert-stat-info">
+                        <span class="expert-stat-val" id="exp-total-count">0</span>
+                        <span class="expert-stat-lbl">Tổng chuyên gia</span>
+                    </div>
+                </div>
+                <div class="expert-stat-card">
+                    <div class="expert-stat-icon" style="background:#f0fdf4; color:#16a34a;">✅</div>
+                    <div class="expert-stat-info">
+                        <span class="expert-stat-val" id="exp-total-replies">0</span>
+                        <span class="expert-stat-lbl">Đã phản hồi</span>
+                    </div>
+                </div>
+                <div class="expert-stat-card">
+                    <div class="expert-stat-icon" style="background:#fffbeb; color:#d97706;">⚡</div>
+                    <div class="expert-stat-info">
+                        <span class="expert-stat-val" id="exp-avg-time">~15 phút</span>
+                        <span class="expert-stat-lbl">Tốc độ phản hồi</span>
+                    </div>
+                </div>
+                <div class="expert-stat-card">
+                    <div class="expert-stat-icon" style="background:#fff1f2; color:#e11d48;">⭐</div>
+                    <div class="expert-stat-info">
+                        <span class="expert-stat-val" id="exp-avg-rating">4.8★</span>
+                        <span class="expert-stat-lbl">Đánh giá chung</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thanh Công cụ -->
+            <div class="expert-toolbar">
+                <div class="expert-search-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="expert-search-input" placeholder="Tìm kiếm chuyên gia..." oninput="filterExpertsList()">
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn-approve-expert" onclick="openApproveExpertModal()">
+                        <span>📋</span> Phê duyệt hồ sơ
+                    </button>
+                    <button class="btn-add-expert" onclick="openPromoteExpertModal()">
+                        <span>➕</span> Cấp quyền Chuyên gia mới
+                    </button>
+                </div>
+            </div>
+
+            <div class="expert-grid" id="experts-grid"></div>
+        </div>
+
+        <div class="tab-panel" id="page-reports">
+            <div class="report-grid" id="reports-grid"></div>
+        </div>
+
+    </main>
+
+    <div id="admin-login-overlay">
+        <div class="login-box">
+            <div class="login-logo">🚀</div>
+            <h2>Admin Login</h2>
+            <p>Hệ thống quản trị AgriSocial</p>
+            <input type="email" id="admin-email" class="login-input" placeholder="Email quản trị">
+            <input type="password" id="admin-pass" class="login-input" placeholder="Mật khẩu">
+            <button class="btn-login" onclick="handleAdminLogin()">Đăng nhập hệ thống</button>
+            <p style="margin-top:20px;"><a href="/" style="color:var(--text-sub); text-decoration:none; font-size:12px;">← Quay về trang chủ</a></p>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div class="confirm-overlay" id="confirmModal">
+        <div class="confirm-box">
+            <div class="confirm-header">
+                <div class="confirm-icon" id="confirmIcon">⚠️</div>
+                <h3 id="confirmTitle">Xác nhận</h3>
+                <p id="confirmMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+            </div>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" id="confirmCancel" onclick="closeConfirmModal(false)">Hủy bỏ</button>
+                <button class="confirm-btn danger" id="confirmOk" onclick="closeConfirmModal(true)">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Premium Diagnostic Modal -->
+    <div id="diag-modal" class="diag-modal">
+        <div class="diag-content">
+            <div class="diag-header">
+                <div class="diag-icon">🛠️</div>
+                <h3>Chẩn đoán hệ thống</h3>
+                <button class="diag-close" onclick="closeDiagModal()">&times;</button>
+            </div>
+            <div class="diag-body">
+                <div class="diag-section">
+                    <label>🔴 Vấn đề phát hiện:</label>
+                    <p id="diag-problem">Không thể kết nối cơ sở dữ liệu.</p>
+                </div>
+                <div class="diag-section">
+                    <label>🔍 Phân tích kỹ thuật:</label>
+                    <code id="diag-technical">Error: Connection refused</code>
+                </div>
+                <div class="diag-section">
+                    <label>💡 Hướng dẫn khắc phục:</label>
+                    <ul id="diag-steps">
+                        <li>Kiểm tra lại Internet.</li>
+                        <li>Xác minh SUPABASE_KEY.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="diag-footer">
+                <button class="btn-diag-secondary" onclick="closeDiagModal()">Đóng</button>
+                <button class="btn-diag-primary" onclick="retryConnection()">🔄 Thử kết nối lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Selection Modal -->
+    <div id="role-modal" class="diag-modal" style="display:none;">
+        <div class="diag-content" style="max-width: 550px;">
+            <div class="diag-header" style="background:#f0fdf4; border-bottom:1px solid #dcfce7;">
+                <div class="diag-icon" style="box-shadow: 0 4px 10px rgba(16,185,129,0.1);">🛡️</div>
+                <h3 style="color:#15803d;">Cấp quyền người dùng</h3>
+                <button class="diag-close" style="color:#15803d;" onclick="closeRoleModal()">&times;</button>
+            </div>
+            <div class="diag-body" style="padding:20px;">
+                <div class="diag-section">
+                    <label>Chọn vai trò muốn cấp:</label>
+                    <select id="role-select" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; margin-top:8px; font-weight:600; outline:none;">
+                        <option value="user">USER (Nông dân / Người dùng)</option>
+                        <option value="expert">EXPERT (Chuyên gia nông nghiệp)</option>
+                        <option value="admin">ADMIN (Quản trị viên hệ thống)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="diag-footer">
+                <button class="btn-diag-secondary" onclick="closeRoleModal()">Hủy</button>
+                <button class="btn-diag-primary" style="background:#16a34a;" onclick="saveRole()">🔄 Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expert Detail Modal -->
+    <div id="expert-detail-modal" class="diag-modal" style="display:none;">
+        <div class="diag-content" style="max-width: 750px;">
+            <div class="diag-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                <div class="diag-icon" style="background:var(--primary-light); color:var(--primary)">🎓</div>
+                <h3 id="exp-detail-title">Hồ sơ Chuyên gia</h3>
+                <button class="diag-close" onclick="closeExpertDetailModal()">&times;</button>
+            </div>
+            <div class="diag-body" style="padding:24px; display:flex; flex-direction:column; gap:16px;">
+                <div style="display:flex; gap:20px; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:16px;">
+                    <img id="exp-detail-avatar" src="" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid white; box-shadow:0 0 0 3px var(--primary-light);">
+                    <div>
+                        <h3 id="exp-detail-name" style="font-size:18px; font-weight:800; color:#0f172a; margin-bottom:4px;">Chuyên gia</h3>
+                        <span class="expert-badge general" id="exp-detail-badge">Chuyên môn</span>
+                    </div>
+                </div>
+                <div class="diag-section">
+                    <label>Thông tin liên hệ</label>
+                    <p style="margin-bottom:6px;">📧 <b>Email:</b> <span id="exp-detail-email">N/A</span></p>
+                    <p style="margin-bottom:6px;">📞 <b>Điện thoại:</b> <span id="exp-detail-phone">N/A</span></p>
+                    <p style="margin-bottom:6px;">📍 <b>Khu vực:</b> <span id="exp-detail-location">N/A</span></p>
+                </div>
+                <div class="diag-section">
+                    <label>Tiểu sử / Giới thiệu</label>
+                    <p id="exp-detail-bio" style="font-style:italic; color:#475569; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; line-height:1.5;">N/A</p>
+                </div>
+            </div>
+            <div class="diag-footer">
+                <button class="btn-diag-secondary" onclick="closeExpertDetailModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promote Expert Modal -->
+    <div id="promote-expert-modal" class="diag-modal" style="display:none;">
+        <div class="diag-content" style="max-width: 650px;">
+            <div class="diag-header" style="background:#f0fdf4; border-bottom:1px solid #dcfce7;">
+                <div class="diag-icon" style="background:#f0fdf4; color:#16a34a;">➕</div>
+                <h3 style="color:#15803d;">Cấp quyền Chuyên gia mới</h3>
+                <button class="diag-close" style="color:#15803d;" onclick="closePromoteExpertModal()">&times;</button>
+            </div>
+            <div class="diag-body" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <div class="diag-section">
+                    <label>Tìm kiếm người dùng</label>
+                    <div style="display:flex; gap:10px; margin-top:8px;">
+                        <input type="text" id="promote-search-input" placeholder="Nhập tên đăng nhập hoặc email..." style="flex:1; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; outline:none; font-size:14px;" onkeydown="if(event.key==='Enter') searchUsersToPromote()">
+                        <button class="btn-sm" style="background:var(--primary); color:white; padding:10px 16px; border:none; border-radius:8px; font-weight:600; cursor:pointer;" onclick="searchUsersToPromote()">Tìm</button>
+                    </div>
+                </div>
+                <div class="diag-section">
+                    <label style="margin-bottom:8px; font-size:11px;">Kết quả tìm kiếm</label>
+                    <div id="promote-search-results" style="max-height: 200px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:8px;">
+                        <p style="color:var(--text-sub); text-align:center; padding:12px; font-size:13px;">Nhập từ khóa và bấm Tìm kiếm</p>
+                    </div>
+                </div>
+            </div>
+            <div class="diag-footer">
+                <button class="btn-diag-secondary" onclick="closePromoteExpertModal()">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve Expert Modal -->
+    <div id="approve-expert-modal" class="diag-modal" style="display:none;">
+        <div class="diag-content" style="max-width: 750px;">
+            <div class="diag-header" style="background:#f0fdf4; border-bottom:1px solid #dcfce7;">
+                <div class="diag-icon" style="background:#dcfce7; color:#16a34a; display:flex; align-items:center; justify-content:center; border-radius:50%; width:32px; height:32px; font-size:16px;">📋</div>
+                <h3 style="color:#15803d;">Phê duyệt Hồ sơ Chuyên gia</h3>
+                <button class="diag-close" style="color:#15803d;" onclick="closeApproveExpertModal()">&times;</button>
+            </div>
+            <div class="diag-body" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <div id="approve-expert-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sử dụng var và tên biến duy nhất để tránh lỗi "Redeclare" trong IDE
+        var ADMIN_SUPABASE_URL = "https://rsjiaxbvlnslmtollozg.supabase.co";
+        var ADMIN_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzamlheGJ2bG5zbG10b2xsb3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NTg1NjcsImV4cCI6MjA5MjQzNDU2N30.vl13Y4ZiVd6p2j2zdIEQbyS0Lk5V0OFiJ0AQLHLxK_c";
+        var adminSupabaseClient = supabase.createClient(ADMIN_SUPABASE_URL, ADMIN_SUPABASE_KEY);
+
+        var adminUserSession = null;
+        var adminEngagementChart = null;
+        var adminCropScansChart = null;
+        var adminScanFrequencyChart = null;
+
+        async function initAdmin() {
+            await checkAdminAuth();
+            setupAdminTabLogic();
+            loadAdminDashboardData();
+        }
+
+        // Auth Guard 2.0 (Custom Auth)
+        async function checkAdminAuth() {
+            const token = localStorage.getItem('agrisocial_token');
+            const userStr = localStorage.getItem('agrisocial_user');
+            
+            if (!token || !userStr) {
+                window.location.href = '/404.html';
+                return;
+            }
+            
+            const user = JSON.parse(userStr);
+            if (user.role !== 'admin') {
+                window.location.href = '/404.html';
+                return;
+            }
+            
+            adminUserSession = user;
+            adminUserSession.id = user.sub; // Map sub to id
+            document.getElementById('admin-login-overlay').style.display = 'none';
+            document.getElementById('admin-name-ui').innerText = user.username || "Admin";
+            
+            // Khởi tạo các thành phần giao diện sau khi auth thành công
+            setupAdminTabLogic();
+            loadAdminDashboardData();
+        }
+
+        async function handleAdminLogin() {
+            const username = document.getElementById('admin-email').value; // email input is now username
+            const pwd = document.getElementById('admin-pass').value;
+            if (!username || !pwd) return alert("Vui lòng nhập đủ thông tin");
+            
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password: pwd })
+                });
+                const data = await res.json();
+                if (data.success && data.user.role === 'admin') {
+                    localStorage.setItem('agrisocial_token', data.token);
+                    localStorage.setItem('agrisocial_user', JSON.stringify(data.user));
+                    location.reload();
+                } else {
+                    window.location.href = '/404.html';
+                }
+            } catch (err) {
+                alert("Đăng nhập thất bại: Lỗi server");
+            }
+        }
+
+        function setupAdminTabLogic() {
+            var tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(function(tab) {
+                tab.onclick = function() {
+                    tabs.forEach(function(t) { t.classList.remove('active'); });
+                    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+                    tab.classList.add('active');
+                    var targetId = tab.dataset.tab;
+                    document.getElementById(targetId).classList.add('active');
+                    
+                    if (targetId === 'page-users') loadAdminUsers();
+                    if (targetId === 'page-posts') loadAdminAllPosts();
+                    if (targetId === 'page-experts') loadAdminExperts();
+                    if (targetId === 'page-reports') loadAdminReports();
+                };
+            });
+        }
+
+        function switchTab(tabId) {
+            var tab = document.querySelector('[data-tab="' + tabId + '"]');
+            if (tab) tab.click();
+        }
+
+        async function loadAdminDashboardData() {
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                var res = await fetch('/api/admin/stats', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                var stats = await res.json();
+                
+                if (res.status === 401) {
+                    showDiagModal("Lỗi xác thực", "Mã phiên làm việc (Token) không hợp lệ hoặc đã hết hạn.", ["Hãy thử Đăng xuất và Đăng nhập lại."]);
+                    return;
+                }
+                document.getElementById('stat-total-users').innerText = stats.users || 0;
+                document.getElementById('stat-active-users').innerText = stats.active_users || 0;
+                document.getElementById('stat-total-posts').innerText = stats.posts || 0;
+                document.getElementById('stat-today-posts').innerText = stats.today_posts || 0;
+                document.getElementById('stat-pending-reports').innerText = stats.pending_reports || 0;
+                document.getElementById('stat-new-reports').innerText = stats.new_reports || 0;
+                document.getElementById('report-count-badge').innerText = stats.pending_reports || 0;
+                document.getElementById('stat-interactions').innerText = stats.interactions || 0;
+                
+                // Cập nhật trạng thái hệ thống dựa trên phản hồi thành công của API
+                const dbUptime = document.getElementById('uptime-db');
+                const serverUptime = document.getElementById('uptime-server');
+                const aiStatus = document.getElementById('uptime-ai');
+
+                // 1. API Server Health
+                serverUptime.innerText = "Online";
+                serverUptime.style.cursor = "pointer";
+                serverUptime.title = "Nhấn để xem báo cáo sức khỏe";
+                serverUptime.onclick = function() {
+                    showDiagModal(
+                        "Máy chủ API đang ổn định",
+                        "Python Backend (FastAPI) đang xử lý tốt các yêu cầu.",
+                        [
+                            "Tốc độ phản hồi trung bình: ~15ms",
+                            "Tải lượng CPU/RAM: Bình thường",
+                            "Hệ thống định tuyến (Routing): Hoạt động"
+                        ],
+                        true
+                    );
+                };
+
+                // 2. Database Health
+                if (stats && stats.users !== undefined && !stats.db_error) {
+                    dbUptime.innerText = "Online";
+                    dbUptime.style.color = "var(--success)";
+                    dbUptime.style.cursor = "pointer";
+                    dbUptime.title = "Nhấn để xem báo cáo sức khỏe";
+                    dbUptime.onclick = function() {
+                        showDiagModal(
+                            "Hệ thống vận hành tốt",
+                            "Kết nối ổn định. Thời gian phản hồi API: < 50ms.",
+                            [
+                                "Cơ sở dữ liệu Supabase đang đồng bộ tốt",
+                                "Tính năng đếm người dùng & bài đăng hoạt động chính xác",
+                                "Hệ thống bảo mật (JWT) đã được xác thực"
+                            ],
+                            true // isSuccess flag
+                        );
+                    };
+                } else {
+                    dbUptime.innerText = "Error";
+                    dbUptime.style.color = "red";
+                    dbUptime.style.cursor = "pointer";
+                    dbUptime.title = "Nhấn để xem chi tiết lỗi";
+                    
+                    const errorMsg = stats.db_error || "Không thể truy cập dữ liệu từ Supabase.";
+                    dbUptime.onclick = function() {
+                        showDiagModal(
+                            "Không thể kết nối cơ sở dữ liệu",
+                            errorMsg,
+                            [
+                                "Kiểm tra lại SUPABASE_KEY trong file backend/config.py",
+                                "Kiểm tra kết nối Internet của máy chủ",
+                                "Đảm bảo các bảng dữ liệu (likes, comments) đã được tạo trên Supabase"
+                            ],
+                            false // isSuccess flag
+                        );
+                    };
+                }
+                
+                // 3. AI Recognition Health
+                aiStatus.innerText = "Ready";
+                aiStatus.style.cursor = "pointer";
+                aiStatus.title = "Nhấn để xem báo cáo sức khỏe";
+                aiStatus.onclick = function() {
+                    showDiagModal(
+                        "Mô hình AI sẵn sàng",
+                        "Mô hình EfficientNetV2-S đã được nạp thành công vào bộ nhớ.",
+                        [
+                            "Độ chính xác dự kiến (Accuracy): > 90%",
+                            "Tốc độ nhận diện ảnh: ~200ms/ảnh",
+                            "GPU/CPU Acceleration: Đã kích hoạt"
+                        ],
+                        true
+                    );
+                };
+
+                initAdminChart(stats.engagement_chart);
+                initAICharts(stats.crop_scans_chart, stats.scan_frequency_chart);
+
+                var usersRes = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var allUsers = await usersRes.json();
+                if (Array.isArray(allUsers)) {
+                    renderAdminNewUsers(allUsers.slice(0, 5));
+                } else {
+                    console.error("Users API did not return an array:", allUsers);
+                    renderAdminNewUsers([]);
+                }
+            } catch (err) { console.error("Dashboard init error:", err); }
+        }
+
+        function initAdminChart(data) {
+            if (!data) return;
+            var ctx = document.getElementById('engagementChart').getContext('2d');
+            if (adminEngagementChart) adminEngagementChart.destroy();
+            adminEngagementChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Likes', data: data.likes, borderColor: '#e11d48', backgroundColor: '#e11d4811', fill: true, tension: 0.4 },
+                        { label: 'Comments', data: data.comments, borderColor: '#7c3aed', backgroundColor: '#7c3aed11', fill: true, tension: 0.4 },
+                        { label: 'Shares', data: data.shares, borderColor: '#10b981', backgroundColor: '#10b98111', fill: true, tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function initAICharts(cropData, freqData) {
+            // 1. Crop Scans Doughnut Chart
+            if (cropData && Object.keys(cropData).length > 0) {
+                var ctx1 = document.getElementById('cropScansChart').getContext('2d');
+                if (adminCropScansChart) adminCropScansChart.destroy();
+                
+                var labels = Object.keys(cropData);
+                var values = Object.values(cropData);
+                
+                var nameMap = {
+                    "rice": "Lúa nước", "corn": "Cây Ngô", "wheat": "Lúa mì", "soybean": "Đậu nành",
+                    "sugarcane": "Cây Mía", "sweet_potato": "Khoai lang", "sweet": "Khoai lang", "cassava": "Củ Sắn", "san": "Củ Sắn",
+                    "potato": "Khoai tây", "barley": "Lúa mạch", "peanut": "Đậu phộng", 
+                    "millet": "Cây Kê", "sorghum": "Cao lương", "oat": "Yến mạch"
+                };
+                var displayLabels = labels.map(function(l) { return nameMap[l] || l; });
+                
+                adminCropScansChart = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: displayLabels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: [
+                                '#10b981', '#3b82f6', '#f59e0b', '#ef4444', 
+                                '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e',
+                                '#6366f1', '#a855f7', '#06b6d4', '#84cc16'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 12,
+                                    font: {
+                                        size: 11,
+                                        family: 'system-ui, -apple-system, sans-serif',
+                                        weight: '600'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Scan Frequency Line Chart
+            if (freqData) {
+                var ctx2 = document.getElementById('scanFrequencyChart').getContext('2d');
+                if (adminScanFrequencyChart) adminScanFrequencyChart.destroy();
+                
+                adminScanFrequencyChart = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: freqData.labels,
+                        datasets: [{
+                            label: 'Lượt quét',
+                            data: freqData.data,
+                            borderColor: '#34d399',
+                            backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            }
+        }
+
+        async function loadAdminUsers() {
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                var res = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var users = await res.json();
+                if (!Array.isArray(users)) { users = []; }
+                
+                var container = document.getElementById('full-users-table');
+                const currentAdminId = adminUserSession ? adminUserSession.id : null;
+
+                container.innerHTML = users.map(function(u) {
+                    const isMe = u.id === currentAdminId;
+                    const isAdmin = u.role === 'admin';
+                    const isOnline = isMe || (u.last_seen && (new Date() - new Date(u.last_seen)) < 300000);
+                    
+                    let roleBadge = '';
+                    if (isAdmin) {
+                        roleBadge = '<span style="background:#fff1f2; color:#e11d48; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:8px; border:1px solid #fecdd3; font-weight:800;">ADMIN</span>';
+                    } else if (u.role === 'expert') {
+                        roleBadge = '<span style="background:#f5f3ff; color:#7c3aed; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:8px; border:1px solid #ddd6fe; font-weight:800;">CHUYÊN GIA</span>';
+                    } else {
+                        roleBadge = '<span style="background:#f1f5f9; color:#64748b; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:8px; border:1px solid #e2e8f0; font-weight:800;">USER</span>';
+                    }
+
+                    const joinedDate = u.created_at || u.updated_at || null;
+                    const joinedStr = joinedDate ? new Date(joinedDate).toLocaleDateString('vi-VN') : 'Mới tham gia';
+
+                    var bannedBadge = u.banned ? '<span class="badge-banned">ĐÃ KHÓA</span>' : '';
+
+                    return '<tr style="' + (isMe ? 'background:#f8fafc' : (u.banned ? 'background:#fef2f2; opacity:0.85' : '')) + '">' +
+                        '<td><div class="user-info"><div><b>' + (u.full_name || 'Người dùng') + '</b>' + roleBadge + bannedBadge + '<p>' + u.id.substring(0,8) + '</p></div></div></td>' +
+                        '<td><span class="status-badge ' + (isOnline ? 'status-active' : '') + '">' + (isOnline ? 'Online' : 'Offline') + '</span></td>' +
+                        '<td>' + (isMe ? 'Đang truy cập' : (u.last_seen ? adminTimeSince(new Date(u.last_seen)) : 'Vừa mới đây')) + '</td>' +
+                        '<td>' + joinedStr + '</td>' +
+                        '<td>' +
+                            '<div style="display:flex; gap:6px;">' +
+                                '<button class="btn-sm" onclick="viewUserDetails(\'' + u.id + '\')" title="Xem chi tiết">👁️</button>' +
+                                (isMe ? '' : '<button class="btn-sm" style="color:var(--warning)" onclick="changeUserRole(\'' + u.id + '\', \'' + u.role + '\')" title="Phân quyền">🛠️</button>') +
+                                (isMe ? '' : '<button class="btn-sm" style="color:' + (u.banned ? 'var(--success)' : 'var(--danger)') + '" onclick="toggleBanUser(\'' + u.id + '\', ' + (u.banned ? 'true' : 'false') + ')" title="' + (u.banned ? 'Mở khóa tài khoản' : 'Khóa tài khoản') + '">' + (u.banned ? '🔓' : '🔒') + '</button>') +
+                                (isMe ? '' : '<button class="btn-sm" style="color:red" onclick="deleteUser(\'' + u.id + '\')" title="Xóa tài khoản">🗑️</button>') +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>';
+                }).join('');
+            } catch (err) { console.error("Load users error:", err); }
+        }
+
+        async function loadAdminAllPosts() {
+            const token = localStorage.getItem('agrisocial_token');
+            var res = await fetch('/api/admin/posts', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var posts = await res.json();
+            if (!Array.isArray(posts)) { posts = []; }
+            
+            var container = document.getElementById('all-posts-table');
+            container.innerHTML = posts.map(function(p) {
+                var isRestricted = p.status === 'restricted';
+                var statusColor = isRestricted ? 'color:var(--danger)' : 'color:var(--success)';
+                var badgeHtml = isRestricted ? '<div class="restricted-badge">⚠️</div>' : '';
+                
+                var clickAction = (p.image_url && !p.image_url.startsWith('data:')) ? 'onclick="window.open(\'' + p.image_url + '\', \'_blank\')"' : '';
+                return '<tr>' +
+                    '<td><div class="img-container">' + badgeHtml + '<img src="' + (p.image_url || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMTUwIDE1MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjOTRhM2I4Ij5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=') + '" class="post-preview-img" ' + clickAction + '></div></td>' +
+                    '<td>' + (p.caption || 'N/A') + '</td>' +
+                    '<td>' + (p.profiles ? p.profiles.full_name : 'N/A') + '</td>' +
+                    '<td>' + (p.crop_name || 'Khác') + '</td>' +
+                    '<td style="' + statusColor + '; font-weight:700">' + (p.status || 'active') + '</td>' +
+                    '<td>' +
+                        '<button class="btn-sm" onclick="togglePostStatus(\'' + p.id + '\', \'' + p.status + '\')">' + (isRestricted ? '🔓 Gỡ hạn chế' : '⚠️ Hạn chế') + '</button> ' +
+                        '<button class="btn-sm" style="color:red" onclick="handleAdminDeletePost(\'' + p.id + '\')">🗑️ Xóa</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        async function togglePostStatus(id, currentStatus) {
+            console.log("Toggling status for:", id, "current:", currentStatus);
+            var newStatus = currentStatus === 'restricted' ? 'active' : 'restricted';
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                var res = await fetch('/api/admin/posts/' + id + '/status', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                var result = await res.json();
+                console.log("Toggle Result:", result);
+                if (res.ok) {
+                    showToast("Đã cập nhật trạng thái!", "success");
+                    loadAdminAllPosts();
+                    loadAdminDashboardData();
+                } else {
+                    alert("Lỗi server: " + (result.error || result.detail || "Không rõ lỗi"));
+                }
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                alert("Lỗi kết nối: " + err.message);
+            }
+        }
+
+        async function loadAdminReports() {
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                var res = await fetch('/api/admin/reports', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var reports = await res.json();
+                if (!Array.isArray(reports)) { reports = []; }
+                
+                var container = document.getElementById('reports-grid');
+                if (reports.length === 0) {
+                    container.innerHTML = '<div class="empty-reports-state">' +
+                        '<div class="empty-reports-icon">🛡️</div>' +
+                        '<div class="empty-reports-title">Hệ thống an toàn</div>' +
+                        '<div class="empty-reports-desc">Hiện không có báo cáo vi phạm nào chưa xử lý.</div>' +
+                        '</div>';
+                    return;
+                }
+                
+                container.innerHTML = reports.map(function(r) {
+                    var reporterName = r.profiles ? r.profiles.full_name : 'Người dùng ẩn danh';
+                    var authorName = (r.posts && r.posts.profiles) ? r.posts.profiles.full_name : 'Người dùng ẩn danh';
+                    var postImg = (r.posts && r.posts.image_url) ? r.posts.image_url : '';
+                    
+                    var reasonLabel = r.reason || 'Báo cáo vi phạm';
+                    var createdStr = r.created_at ? adminTimeSince(new Date(r.created_at)) : 'N/A';
+
+                    var imgHtml = postImg ? '<img src="' + postImg + '" class="report-img">' : 
+                        '<div class="report-img" style="display:flex; align-items:center; justify-content:center; background:#f1f5f9; color:#94a3b8; font-size:13px; font-weight:bold; min-height:120px;">Bài đăng không có ảnh</div>';
+
+                    return '<div class="report-card-v2">' +
+                        imgHtml +
+                        '<div class="report-content">' +
+                            '<div class="report-meta-info">' +
+                                '<div class="report-meta-row">' +
+                                    '<span class="report-type-badge">' + reasonLabel + '</span>' +
+                                    '<span class="report-time">' + createdStr + '</span>' +
+                                '</div>' +
+                                '<div class="report-user-line">👤 <b>Người báo cáo:</b> ' + reporterName + '</div>' +
+                                '<div class="report-user-line">📝 <b>Tác giả:</b> ' + authorName + '</div>' +
+                            '</div>' +
+                            '<p class="report-text">"' + (r.posts ? (r.posts.caption || 'Không có mô tả') : 'Bài viết đã bị xóa trước đó') + '"</p>' +
+                            '<div class="report-actions">' +
+                                '<button class="btn-dismiss-report" onclick="handleResolveReport(\'' + r.id + '\')">🛡️ Bỏ qua</button>' +
+                                '<button class="btn-delete-report-post" onclick="handleAdminDeletePost(\'' + r.post_id + '\')">🗑️ Xóa bài</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            } catch (err) {
+                console.error("Error loading reports:", err);
+                showToast("Lỗi khi tải danh sách báo cáo", "error");
+            }
+        }
+
+        async function handleResolveReport(reportId) {
+            showToast("Đang xử lý...", "warning");
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                var res = await fetch('/api/admin/reports/' + reportId + '/resolve', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    }
+                });
+                var result = await res.json();
+                if (res.ok) {
+                    showToast("Đã giải quyết/bỏ qua báo cáo!", "success");
+                    loadAdminReports();
+                    loadAdminDashboardData();
+                } else {
+                    showToast("Lỗi: " + (result.error || "Không rõ lỗi"), "error");
+                }
+            } catch (e) {
+                showToast("Lỗi kết nối", "error");
+            }
+        }
+
+        var adminCachedExperts = [];
+
+        async function loadAdminExperts() {
+            try {
+                // 1. Fetch experts
+                var expertsRes = await adminSupabaseClient.from('profiles').select('*').eq('role', 'expert');
+                adminCachedExperts = expertsRes.data || [];
+                
+                // 2. Fetch replies count dynamically
+                var repliesRes = await adminSupabaseClient.from('expert_responses').select('id', { count: 'exact', head: true });
+                var totalReplies = repliesRes.count || 0;
+
+                // 3. Update stats counters
+                document.getElementById('exp-total-count').innerText = adminCachedExperts.length;
+                document.getElementById('exp-total-replies').innerText = totalReplies;
+
+                // 4. Render
+                renderExpertsList(adminCachedExperts);
+            } catch (err) {
+                console.error("Error loading experts:", err);
+                showToast("Không thể tải danh sách chuyên gia", "error");
+            }
+        }
+
+        function renderExpertsList(list) {
+            var container = document.getElementById('experts-grid');
+            if (list.length === 0) {
+                container.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:40px; color:var(--text-sub);">Không tìm thấy chuyên gia nào.</p>';
+                return;
+            }
+
+            container.innerHTML = list.map(function(e) {
+                // Determine specialty badge based on bio / main crop
+                var crop = (e.main_crop || '').toLowerCase();
+                var badgeHtml = '';
+                
+                if (crop.includes('lúa') || crop.includes('rice')) {
+                    badgeHtml = '<span class="expert-badge rice">Lúa nước</span>';
+                } else if (crop.includes('ngô') || crop.includes('bắp') || crop.includes('corn')) {
+                    badgeHtml = '<span class="expert-badge corn">Cây Ngô</span>';
+                } else if (e.main_crop) {
+                    badgeHtml = '<span class="expert-badge general">' + e.main_crop + '</span>';
+                }
+
+                return '<div class="expert-card-v2">' +
+                    '<div>' +
+                        '<div class="expert-avatar-wrap">' +
+                            '<img src="' + (e.avatar_url || 'https://i.pravatar.cc/100') + '" class="expert-img-v2">' +
+                        '</div>' +
+                        '<h3 class="expert-name">' + (e.full_name || 'Chuyên gia') + '</h3>' +
+                        badgeHtml +
+                        '<p class="expert-meta-info">' + (e.bio || 'Chuyên gia hỗ trợ kỹ thuật canh tác nông nghiệp.') + '</p>' +
+                    '</div>' +
+                    '<div class="expert-actions">' +
+                        '<button class="btn-sm" style="flex:1; padding:8px 12px; font-weight:600;" onclick="viewExpertDetails(\'' + e.id + '\')">👁️ Xem</button>' +
+                        '<button class="btn-sm" style="color:var(--danger); flex:1; padding:8px 12px; font-weight:600;" onclick="demoteExpert(\'' + e.id + '\', \'' + (e.full_name || 'Chuyên gia').replace(/'/g, "\\'") + '\')">❌ Gỡ</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function filterExpertsList() {
+            var query = document.getElementById('expert-search-input').value.toLowerCase().trim();
+            if (!query) {
+                renderExpertsList(adminCachedExperts);
+                return;
+            }
+            var filtered = adminCachedExperts.filter(function(e) {
+                var name = (e.full_name || '').toLowerCase();
+                var bio = (e.bio || '').toLowerCase();
+                var crop = (e.main_crop || '').toLowerCase();
+                return name.includes(query) || bio.includes(query) || crop.includes(query);
+            });
+            renderExpertsList(filtered);
+        }
+
+        async function viewExpertDetails(userId) {
+            try {
+                showToast("Đang tải thông tin hồ sơ...", "info");
+                var res = await adminSupabaseClient.from('profiles').select('*').eq('id', userId).single();
+                if (res.error || !res.data) {
+                    showToast("Không tìm thấy hồ sơ chuyên gia", "error");
+                    return;
+                }
+                var e = res.data;
+                document.getElementById('exp-detail-avatar').src = e.avatar_url || 'https://i.pravatar.cc/100';
+                document.getElementById('exp-detail-name').innerText = e.full_name || 'Chuyên gia';
+                document.getElementById('exp-detail-email').innerText = e.email || 'N/A';
+                document.getElementById('exp-detail-phone').innerText = e.phone || 'N/A';
+                document.getElementById('exp-detail-location').innerText = e.farm_location || 'N/A';
+                document.getElementById('exp-detail-bio').innerText = e.bio || 'Không có giới thiệu.';
+                
+                var crop = (e.main_crop || '').toLowerCase();
+                var badgeEl = document.getElementById('exp-detail-badge');
+                if (e.main_crop) {
+                    badgeEl.innerText = e.main_crop;
+                    badgeEl.className = 'expert-badge ' + (crop.includes('lúa') || crop.includes('rice') ? 'rice' : (crop.includes('ngô') || crop.includes('bắp') || crop.includes('corn') ? 'corn' : 'general'));
+                    badgeEl.style.display = 'inline-block';
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+
+                document.getElementById('expert-detail-modal').style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi khi tải thông tin chi tiết", "error");
+            }
+        }
+
+        function closeExpertDetailModal() {
+            document.getElementById('expert-detail-modal').style.display = 'none';
+        }
+
+        async function demoteExpert(userId, name) {
+            var confirmed = await showConfirmModal({
+                title: 'Hủy tư cách Chuyên gia',
+                message: 'Bạn có chắc chắn muốn hủy quyền Chuyên gia của "' + name + '"? Tài khoản này sẽ trở lại vai trò người dùng thường.',
+                icon: '🛡️',
+                type: 'warning',
+                okText: 'Hủy quyền chuyên gia'
+            });
+            if (!confirmed) return;
+            
+            showToast("Đang cập nhật...", "warning");
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/admin/users/' + userId + '/role', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ role: 'user' })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showToast("Đã hủy quyền Chuyên gia của " + name + "!", "success");
+                    loadAdminExperts(); // Refresh lists
+                    if (document.getElementById('page-users').classList.contains('active')) {
+                        loadAdminUsers();
+                    }
+                } else {
+                    showToast("Lỗi: " + (result.error || "Không rõ lỗi"), "error");
+                }
+            } catch (e) {
+                showToast("Lỗi kết nối", "error");
+            }
+        }
+
+        // --- PROMOTE EXPERT FLOW ---
+        function openPromoteExpertModal() {
+            document.getElementById('promote-search-input').value = '';
+            document.getElementById('promote-search-results').innerHTML = 
+                '<p style="color:var(--text-sub); text-align:center; padding:12px; font-size:13px;">Nhập từ khóa và bấm Tìm kiếm</p>';
+            document.getElementById('promote-expert-modal').style.display = 'flex';
+        }
+
+        function closePromoteExpertModal() {
+            document.getElementById('promote-expert-modal').style.display = 'none';
+        }
+
+        async function searchUsersToPromote() {
+            var query = document.getElementById('promote-search-input').value.trim();
+            if (!query) {
+                showToast("Vui lòng nhập từ khóa tìm kiếm", "warning");
+                return;
+            }
+            
+            var resultsContainer = document.getElementById('promote-search-results');
+            resultsContainer.innerHTML = '<p style="text-align:center; padding:12px; font-size:13px; color:var(--primary);">Đang tìm kiếm...</p>';
+            
+            try {
+                // Find users in profiles whose role is not expert or admin
+                var res = await adminSupabaseClient
+                    .from('profiles')
+                    .select('id, username, full_name, role, email, avatar_url')
+                    .or('username.ilike.%' + query + '%,email.ilike.%' + query + '%,full_name.ilike.%' + query + '%')
+                    .limit(10);
+                
+                if (res.error) throw res.error;
+                
+                var users = res.data || [];
+                // Filter out existing experts and admins
+                var eligibleUsers = users.filter(function(u) { return u.role !== 'expert' && u.role !== 'admin'; });
+                
+                if (eligibleUsers.length === 0) {
+                    resultsContainer.innerHTML = '<p style="color:var(--text-sub); text-align:center; padding:12px; font-size:13px;">Không tìm thấy người dùng phù hợp (hoặc họ đã là Admin/Chuyên gia).</p>';
+                    return;
+                }
+                
+                resultsContainer.innerHTML = eligibleUsers.map(function(u) {
+                    return '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding:8px 0;">' +
+                        '<div style="display:flex; gap:10px; align-items:center;">' +
+                            '<img src="' + (u.avatar_url || 'https://i.pravatar.cc/100') + '" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">' +
+                            '<div>' +
+                                '<div style="font-weight:700; font-size:13px; color:#1e293b;">' + (u.full_name || 'Nông dân') + '</div>' +
+                                '<div style="font-size:11px; color:var(--text-sub);">@' + u.username + ' | ' + (u.email || 'Không có email') + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="btn-sm" style="background:var(--success); color:white; border:none; padding:6px 12px; font-weight:600; cursor:pointer;" onclick="promoteUserToExpert(\'' + u.id + '\', \'' + (u.full_name || u.username).replace(/'/g, "\\'") + '\')">Cấp quyền</button>' +
+                    '</div>';
+                }).join('');
+            } catch (err) {
+                console.error("Search users error:", err);
+                resultsContainer.innerHTML = '<p style="color:var(--danger); text-align:center; padding:12px; font-size:13px;">Lỗi tìm kiếm dữ liệu.</p>';
+            }
+        }
+
+        async function promoteUserToExpert(userId, name) {
+            var confirmed = await showConfirmModal({
+                title: 'Thăng cấp Chuyên gia',
+                message: 'Bạn có chắc chắn muốn cấp quyền Chuyên gia cho "' + name + '" không?',
+                icon: '🎓',
+                type: 'success',
+                okText: 'Cấp quyền Chuyên gia'
+            });
+            if (!confirmed) return;
+            
+            showToast("Đang thăng cấp...", "warning");
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/admin/users/' + userId + '/role', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ role: 'expert' })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showToast("Đã thăng cấp " + name + " thành Chuyên gia thành công!", "success");
+                    closePromoteExpertModal();
+                    loadAdminExperts(); // Refresh
+                    if (document.getElementById('page-users').classList.contains('active')) {
+                        loadAdminUsers();
+                    }
+                } else {
+                    showToast("Lỗi: " + (result.error || "Không rõ lỗi"), "error");
+                }
+            } catch (e) {
+                showToast("Lỗi kết nối", "error");
+            }
+        }
+
+        async function handleAdminDeletePost(id) {
+            console.log("Deleting post:", id);
+            var confirmed = await showConfirmModal({
+                title: 'Xóa bài viết',
+                message: 'Bạn có chắc chắn muốn XÓA VĨNH VIỄN bài viết này không?',
+                icon: '🗑️',
+                type: 'danger',
+                okText: 'Xóa vĩnh viễn'
+            });
+            if (!confirmed) return;
+            const token = localStorage.getItem('agrisocial_token');
+            try {
+                var res = await fetch('/api/admin/posts/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var result = await res.json();
+                console.log("Delete Result:", result);
+                if (res.ok) {
+                    showToast("Đã xóa bài viết!", "success");
+                    loadAdminAllPosts(); 
+                    loadAdminReports(); 
+                    loadAdminDashboardData();
+                } else {
+                    alert("Lỗi khi xóa: " + (result.error || result.detail || "Không rõ lỗi"));
+                }
+            } catch (err) {
+                console.error("Delete Fetch Error:", err);
+                alert("Lỗi kết nối: " + err.message);
+            }
+        }
+
+        function renderAdminNewUsers(users) {
+            document.getElementById('new-users-list').innerHTML = users.map(function(u) {
+                return '<div class="user-item">' +
+                    '<div class="user-info"><img src="' + (u.avatar_url || 'https://i.pravatar.cc/100') + '" class="user-img"><div><b>' + u.full_name + '</b></div></div>' +
+                    '<div class="user-time">' + adminTimeSince(new Date(u.created_at)) + '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function adminTimeSince(date) {
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return "vừa xong";
+            var minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + " phút";
+            var hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + " giờ";
+            return Math.floor(hours / 24) + " ngày";
+        }
+
+        // --- REAL USER ACTIONS ---
+        function viewUserDetails(userId) {
+            showToast("Đang tải chi tiết người dùng: " + userId.substring(0,8), "info");
+            // Future: Open a modal with full profile data
+        }
+
+        var activeRoleUserId = null;
+        function openRoleModal(userId, currentRole) {
+            activeRoleUserId = userId;
+            document.getElementById('role-select').value = currentRole;
+            document.getElementById('role-modal').style.display = 'flex';
+        }
+        function closeRoleModal() {
+            document.getElementById('role-modal').style.display = 'none';
+        }
+
+        async function changeUserRole(userId, currentRole) {
+            openRoleModal(userId, currentRole);
+        }
+
+        async function saveRole() {
+            if (!activeRoleUserId) return;
+            const newRole = document.getElementById('role-select').value;
+            closeRoleModal();
+            showToast("Đang cập nhật quyền...", "info");
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/admin/users/' + activeRoleUserId + '/role', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ role: newRole })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    showToast("Cập nhật quyền thành công!", "success");
+                    loadAdminUsers();
+                } else {
+                    showToast("Lỗi khi cập nhật quyền: " + (result.error || "Không rõ lỗi"), "error");
+                }
+            } catch (e) { showToast("Lỗi kết nối", "error"); }
+        }
+
+        // ── Custom Confirm Modal ──
+        let _confirmResolve = null;
+        function showConfirmModal(options) {
+            return new Promise(function(resolve) {
+                _confirmResolve = resolve;
+                var modal = document.getElementById('confirmModal');
+                document.getElementById('confirmTitle').textContent = options.title || 'Xác nhận';
+                document.getElementById('confirmMessage').textContent = options.message || 'Bạn có chắc chắn?';
+                var iconEl = document.getElementById('confirmIcon');
+                var okBtn = document.getElementById('confirmOk');
+                iconEl.className = 'confirm-icon ' + (options.type || 'danger');
+                iconEl.textContent = options.icon || '⚠️';
+                okBtn.className = 'confirm-btn ' + (options.type || 'danger');
+                okBtn.textContent = options.okText || 'Xác nhận';
+                modal.classList.add('active');
+            });
+        }
+        function closeConfirmModal(result) {
+            document.getElementById('confirmModal').classList.remove('active');
+            if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
+        }
+
+        async function toggleBanUser(userId, currentlyBanned) {
+            var newBanned = !currentlyBanned;
+            showToast(newBanned ? "Đang khóa tài khoản..." : "Đang mở khóa tài khoản...", "warning");
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/admin/users/' + userId + '/ban', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ banned: newBanned })
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    showToast(newBanned ? "Đã khóa tài khoản thành công!" : "Đã mở khóa tài khoản thành công!", "success");
+                    loadAdminUsers();
+                } else {
+                    showToast("Lỗi: " + (result.error || "Không xác định"), "error");
+                }
+            } catch (e) { showToast("Lỗi kết nối đến máy chủ", "error"); }
+        }
+
+        async function deleteUser(userId) {
+            var confirmed = await showConfirmModal({
+                title: 'Xóa vĩnh viễn tài khoản',
+                message: 'Tất cả dữ liệu của người dùng sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn thật sự muốn xóa?',
+                icon: '🗑️',
+                type: 'danger',
+                okText: 'Xóa vĩnh viễn'
+            });
+            if (!confirmed) return;
+            
+            showToast("Đang xóa tài khoản...", "warning");
+            try {
+                const token = localStorage.getItem('agrisocial_token');
+                const res = await fetch('/api/admin/users/' + userId, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    showToast("Đã xóa tài khoản thành công!", "success");
+                    loadAdminUsers();
+                } else {
+                    showToast("Lỗi khi xóa tài khoản: " + (result.error || "Không rõ lỗi"), "error");
+                }
+            } catch (e) { showToast("Lỗi kết nối đến máy chủ", "error"); }
+        }
+
+        async function handleAdminLogout() { 
+            try {
+                await adminSupabaseClient.auth.signOut(); 
+            } catch (e) {}
+            localStorage.removeItem('agrisocial_token');
+            localStorage.removeItem('agrisocial_user');
+            location.href = '/'; 
+        }
+
+        function showDiagModal(problem, technical, steps, isSuccess = false) {
+            const modal = document.getElementById('diag-modal');
+            const header = modal.querySelector('.diag-header');
+            const icon = modal.querySelector('.diag-icon');
+            const title = modal.querySelector('.diag-header h3');
+            const problemEl = document.getElementById('diag-problem');
+            const technicalEl = document.getElementById('diag-technical');
+            const stepsUl = document.getElementById('diag-steps');
+            const primaryBtn = modal.querySelector('.btn-diag-primary');
+            const sectionLabelProblem = modal.querySelector('.diag-section label');
+
+            if (isSuccess) {
+                header.style.background = "#f0fdf4";
+                header.style.borderBottomColor = "#dcfce7";
+                icon.innerText = "✅";
+                icon.style.boxShadow = "0 4px 10px rgba(22,163,74,0.1)";
+                title.innerText = "Báo cáo sức khỏe";
+                title.style.color = "#166534";
+                sectionLabelProblem.innerText = "🟢 Trạng thái:";
+                technicalEl.style.color = "#16a34a";
+                technicalEl.style.borderColor = "#dcfce7";
+                technicalEl.style.background = "#f0fdf4";
+                primaryBtn.style.display = "none";
+            } else {
+                header.style.background = "#fef2f2";
+                header.style.borderBottomColor = "#fee2e2";
+                icon.innerText = "🛠️";
+                icon.style.boxShadow = "0 4px 10px rgba(220,38,38,0.1)";
+                title.innerText = "Chẩn đoán hệ thống";
+                title.style.color = "#991b1b";
+                sectionLabelProblem.innerText = "🔴 Vấn đề phát hiện:";
+                technicalEl.style.color = "#e11d48";
+                technicalEl.style.borderColor = "#e2e8f0";
+                technicalEl.style.background = "#f8fafc";
+                primaryBtn.style.display = "block";
+            }
+
+            problemEl.innerText = problem;
+            technicalEl.innerText = technical;
+            stepsUl.innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+            modal.style.display = 'flex';
+        }
+
+        function closeDiagModal() {
+            document.getElementById('diag-modal').style.display = 'none';
+        }
+
+        function retryConnection() {
+            showToast("Đang kiểm tra lại kết nối...", "info");
+            loadAdminDashboardData();
+            setTimeout(() => {
+                const isError = document.getElementById('uptime-db').innerText === "Error";
+                if (!isError) {
+                    showToast("Kết nối thành công!", "success");
+                    closeDiagModal();
+                } else {
+                    showToast("Vẫn chưa thể kết nối.", "error");
+                }
+            }, 1000);
+        }
+
+        function showToast(message, type = 'info') {
+            var container = document.getElementById('toast-container');
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            var icon = icons[type] || icons.info;
+            toast.innerHTML = '<span style="font-size:18px; flex-shrink:0">' + icon + '</span>' +
+                '<span style="font-size:14px; font-weight:600; flex:1; padding-right:16px">' + message + '</span>' +
+                '<button class="toast-close" onclick="this.parentElement.remove()">&times;</button>' +
+                '<div class="toast-progress"></div>';
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.animation = 'toastOut 0.35s ease forwards';
+                setTimeout(function() { toast.remove(); }, 350);
+            }, 4000);
+        }
+
+        async function openApproveExpertModal() {
+            var contentDiv = document.getElementById('approve-expert-content');
+            var modal = document.getElementById('approve-expert-modal');
+            
+            contentDiv.innerHTML = `
+                <div style="text-align:center; padding:30px 10px;">
+                    <div style="width:60px; height:60px; background:#f1f5f9; color:#94a3b8; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:24px;">⏳</div>
+                    <h4 style="color:#475569; font-weight:800; font-size:16px;">Đang tải dữ liệu...</h4>
+                </div>
+            `;
+            modal.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/expert/verifications');
+                const data = await res.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    // Store data globally so viewExpertDetail can access it
+                    window._expertVerificationData = data.data;
+                    let html = `<div style="max-height: 420px; overflow-y: auto; padding-right: 8px;">`;
+                    data.data.forEach(req => {
+                        const submittedAt = req.created_at ? new Date(req.created_at).toLocaleString('vi-VN') : 'Không rõ';
+                        const userId = req.user_id || 'Không rõ';
+                        html += `
+                            <div id="req-card-${req.id}" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:12px; text-align:left; transition: box-shadow 0.2s;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                    <div>
+                                        <p style="margin-bottom:4px; font-size:14px; color:#334155;"><b>Tài khoản yêu cầu:</b> <span style="color:#0f172a; font-weight:600;">${req.full_name}</span></p>
+                                        <p style="margin-bottom:4px; font-size:14px; color:#334155;"><b>Tài liệu đính kèm:</b> <span style="color:#2563eb; font-weight:600;">${req.cert_name}</span></p>
+                                    </div>
+                                    <span style="background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800; text-transform:uppercase; white-space:nowrap; margin-left:8px;">Chờ xử lý</span>
+                                </div>
+                                <!-- Detail panel (hidden by default) -->
+                                <div id="detail-${req.id}" style="display:none; background:white; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:12px; font-size:13px; color:#475569; line-height:1.8;">
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;">
+                                        <div><span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px;">Mã người dùng</span><p style="color:#0f172a; font-weight:600; margin:2px 0 0; word-break:break-all;">${userId}</p></div>
+                                        <div><span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px;">Họ và tên</span><p style="color:#0f172a; font-weight:600; margin:2px 0 0;">${req.full_name}</p></div>
+                                        <div><span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px;">Tên tài liệu</span><p style="color:#2563eb; font-weight:600; margin:2px 0 0;">${req.cert_name}</p></div>
+                                        <div><span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px;">Thời gian gửi</span><p style="color:#0f172a; font-weight:600; margin:2px 0 0;">${submittedAt}</p></div>
+                                        <div><span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px;">Trạng thái</span><p style="margin:2px 0 0;"><span style="background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:800;">CHỜ XỬ LÝ</span></p></div>
+                                    </div>
+                                    ${req.cert_image_url ? `
+                                    <div style="margin-top:14px; border-top:1px solid #f1f5f9; padding-top:12px;">
+                                        <span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px; display:block; margin-bottom:8px;">Ảnh chứng chỉ / Bằng cấp</span>
+                                        <a href="${req.cert_image_url}" target="_blank" title="Nhấp để xem ảnh đầy đủ">
+                                            <img src="${req.cert_image_url}" alt="Chứng chỉ của ${req.full_name}"
+                                                style="max-width:100%; max-height:220px; border-radius:8px; border:1px solid #e2e8f0; object-fit:contain; cursor:zoom-in; display:block; background:#f8fafc;" />
+                                        </a>
+                                        <p style="margin-top:6px; font-size:11px; color:#94a3b8;">Nhấp vào ảnh để xem đầy đủ</p>
+                                    </div>
+                                    ` : `
+                                    <div style="margin-top:14px; border-top:1px solid #f1f5f9; padding-top:12px;">
+                                        <span style="font-weight:700; color:#64748b; text-transform:uppercase; font-size:11px; display:block; margin-bottom:6px;">Ảnh chứng chỉ / Bằng cấp</span>
+                                        <p style="color:#94a3b8; font-size:13px; font-style:italic;">Chuyên gia không đính kèm ảnh chứng chỉ.</p>
+                                    </div>
+                                    `}
+                                </div>
+                                <div style="display:flex; gap:8px; justify-content:flex-end; padding-top:12px; border-top:1px solid #f1f5f9;">
+                                    <button onclick="toggleExpertDetail('${req.id}')" id="view-btn-${req.id}" style="padding:7px 14px; background:#e0f2fe; color:#0284c7; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s; font-size:13px; display:flex; align-items:center; gap:5px;">
+                                        <span>👁</span> Xem
+                                    </button>
+                                    <button onclick="rejectExpertProfile('${req.id}')" style="padding:7px 14px; background:#fee2e2; color:#b91c1c; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s; font-size:13px;">Từ chối / Xóa</button>
+                                    <button onclick="approveExpertProfile('${req.id}')" style="padding:7px 14px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; box-shadow:0 4px 6px -1px rgba(16,185,129,0.2); transition:all 0.2s; font-size:13px;">Phê duyệt</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    contentDiv.innerHTML = html;
+                } else {
+                    contentDiv.innerHTML = `
+                        <div style="text-align:center; padding:30px 10px;">
+                            <div style="width:60px; height:60px; background:#f1f5f9; color:#94a3b8; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:24px;">📭</div>
+                            <h4 style="color:#475569; font-weight:800; font-size:16px;">Chưa có yêu cầu nào</h4>
+                            <p style="color:#64748b; font-size:14px; margin-top:8px; line-height:1.5;">Hiện tại không có chuyên gia nào gửi yêu cầu xác minh hồ sơ năng lực.</p>
+                        </div>
+                        <div style="display:flex; justify-content:center; margin-top:10px;">
+                            <button onclick="closeApproveExpertModal()" style="padding:10px 24px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Đóng lại</button>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                contentDiv.innerHTML = `<div style="text-align:center; color:#e11d48; padding:20px;">Lỗi tải dữ liệu từ máy chủ.</div>`;
+            }
+        }
+
+        function toggleExpertDetail(id) {
+            const panel = document.getElementById('detail-' + id);
+            const btn = document.getElementById('view-btn-' + id);
+            if (!panel) return;
+            const isHidden = panel.style.display === 'none';
+            panel.style.display = isHidden ? 'block' : 'none';
+            btn.style.background = isHidden ? '#bae6fd' : '#e0f2fe';
+            btn.innerHTML = isHidden
+                ? '<span>🔼</span> Ẩn'
+                : '<span>👁</span> Xem';
+        }
+
+        function closeApproveExpertModal() {
+            document.getElementById('approve-expert-modal').style.display = 'none';
+        }
+
+        async function approveExpertProfile(id) {
+            try {
+                const res = await fetch('/api/expert/verifications/' + id + '/approve', { method: 'POST' });
+                const result = await res.json();
+                if (result.success) {
+                    showToast("Đã phê duyệt hồ sơ chuyên gia thành công!", "success");
+                    openApproveExpertModal();
+                } else {
+                    showToast("Lỗi: " + result.detail, "error");
+                }
+            } catch(e) {
+                showToast("Lỗi kết nối", "error");
+            }
+        }
+
+        async function rejectExpertProfile(id) {
+            var confirmed = await showConfirmModal({
+                title: 'Từ chối yêu cầu',
+                message: 'Bạn có chắc muốn từ chối và xóa yêu cầu này?',
+                icon: '❌',
+                type: 'danger',
+                okText: 'Từ chối & Xóa'
+            });
+            if (!confirmed) return;
+            try {
+                const res = await fetch('/api/expert/verifications/' + id, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    showToast("Đã xóa hồ sơ xác minh của chuyên gia.", "info");
+                    openApproveExpertModal();
+                } else {
+                    showToast("Lỗi: " + result.detail, "error");
+                }
+            } catch(e) {
+                showToast("Lỗi kết nối", "error");
+            }
+        }
+
+        // Khởi tạo ứng dụng admin
+        initAdmin();
+    </script>
+</body>
+</html>

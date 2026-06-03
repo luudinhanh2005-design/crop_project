@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CropSnap - Nhận diện Cây trồng AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style_v2.css?v=6.0">
+    <link rel="stylesheet" href="premium_theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo-container">
+                <img src="assets/splash_logo.png" alt="Logo" class="splash-logo">
+            </div>
+            <h1 class="splash-title">CropSnap</h1>
+            <p class="splash-subtitle">Nhận diện cây trồng bằng AI</p>
+            <button id="btn-continue" class="btn-splash-continue">Bắt đầu</button>
+        </div>
+    </div>
+
+    <!-- ═══ TOP HEADER BAR ═══ -->
+    <header class="top-header" id="top-header">
+        <div class="th-left">
+            <span class="th-title" id="page-title">Cộng Đồng</span>
+        </div>
+        <div class="th-right">
+            <div class="notif-wrapper">
+                <button class="th-icon-btn" id="btn-notification" onclick="toggleNotifPanel()">🔔</button>
+                <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+                <div class="notif-panel" id="notif-panel" style="display:none;"></div>
+            </div>
+            <button class="th-icon-btn" id="btn-create-post" onclick="openPostModal()">➕</button>
+        </div>
+    </header>
+
+    <!-- ═══ MAIN CONTENT AREA ═══ -->
+    
+    <div class="app-container">
+        <!-- LEFT SIDEBAR -->
+        <aside class="left-sidebar">
+            <div class="sidebar-widget profile-summary">
+                <div class="profile-avatar" id="sidebar-avatar">N</div>
+                <div class="profile-info">
+                    <h3 id="sidebar-name">Nhà Nông Ẩn Danh</h3>
+                    <p id="sidebar-level" style="font-size:12px; color:#64748b;">Nông dân tập sự</p>
+                </div>
+            </div>
+
+            <nav class="side-nav">
+                <button class="nav-item active bnav-item" data-page="page-community">
+                    <span class="nav-icon">🌐</span> Cộng đồng Feed
+                </button>
+                <button class="nav-item bnav-item" data-page="page-search">
+                    <span class="nav-icon">🔍</span> Tìm kiếm
+                </button>
+                <button class="nav-item bnav-item" data-page="page-camera">
+                    <span class="nav-icon">📸</span> Quét cây AI
+                </button>
+                <button class="nav-item bnav-item" data-page="page-garden">
+                    <span class="nav-icon">🌿</span> Lịch sử & Khu vườn
+                </button>
+                <button class="nav-item bnav-item" data-page="page-profile">
+                    <span class="nav-icon">👤</span> Hồ sơ của tôi
+                </button>
+            </nav>
+        </aside>
+
+<main class="main-content" id="main-content">
+        
+        <!-- ══ TAB 1: CỘNG ĐỒNG (Default) ══ -->
+        <div class="tab-page active" id="page-community">
+            <!-- Ask AI Banner -->
+            <div class="ask-ai-banner" onclick="document.getElementById('btn-toggle-chat').click()">
+                <div class="aab-left">
+                    <span style="font-size:28px;">🌿</span>
+                    <span style="color:#64748b; font-size:14px;">Bạn cần hỏi gì về cây trồng?</span>
+                </div>
+                <button class="aab-btn">✨ Hỏi AI</button>
+            </div>
+
+            <!-- Create Post Bar -->
+            <div class="create-post-bar" onclick="openPostModal()">
+                <div class="cpb-avatar" id="community-avatar">🌱</div>
+                <div class="cpb-input">Bạn đang nghĩ gì về vườn cây?</div>
+                <button class="cpb-btn" onclick="event.stopPropagation(); openPostModal()">📸</button>
+            </div>
+
+            <!-- Feed -->
+            <div id="community-feed" class="feed-container">
+                <div class="feed-loading">
+                    <div style="font-size:32px; margin-bottom:10px;">🔄</div>
+                    <span>Đang tải bản tin...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ TAB 2: TÌM KIẾM ══ -->
+        <div class="tab-page" id="page-search">
+            <div class="search-container">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm cây trồng, bệnh cây...">
+                </div>
+                <div class="search-categories">
+                    <h3>Khám phá</h3>
+                    <div class="category-grid">
+                        <div class="category-card" onclick="searchCrop('rice')">🌾<span>Lúa</span></div>
+                        <div class="category-card" onclick="searchCrop('corn')">🌽<span>Ngô</span></div>
+                        <div class="category-card" onclick="searchCrop('cassava')">🥔<span>Sắn</span></div>
+                        <div class="category-card" onclick="searchCrop('sugarcane')">🎋<span>Mía</span></div>
+                        <div class="category-card" onclick="searchCrop('soybean')">🌱<span>Đậu nành</span></div>
+                        <div class="category-card" onclick="searchCrop('sweet_potato')">🍠<span>Khoai lang</span></div>
+                        <div class="category-card" onclick="searchCrop('potato')">🥔<span>Khoai tây</span></div>
+                        <div class="category-card" onclick="searchCrop('wheat')">🌾<span>Lúa mì</span></div>
+                    </div>
+                </div>
+                <div id="search-results" style="margin-top:15px;"></div>
+            </div>
+        </div>
+
+        <!-- ══ TAB 3: CAMERA / SCANNER ══ -->
+        <div class="tab-page" id="page-camera">
+            <div class="scanner-wrapper">
+                <div class="scanner-box" id="scanner-box">
+                    <video id="camera-stream" autoplay playsinline style="display:none;"></video>
+                    <img id="preview-img" style="display:none;" />
+                    <img id="heatmap-img" class="heatmap-overlay" style="display:none;" />
+                    <div class="loading-overlay" id="scan-overlay" style="display:none;">
+                        <div class="scanner-laser"></div>
+                        <p class="loading-text">Đang phân tích...</p>
+                    </div>
+                    <div class="radar" id="placeholder-text">
+                        <div class="radar-circle"></div>
+                        <div class="radar-circle inner"></div>
+                        <div class="radar-beam"></div>
+                    </div>
+                    <p id="placeholder-label" style="position:absolute; bottom:30px; text-align:center; color:#94a3b8; font-size:14px; z-index:5;">Quét Camera hoặc Tải ảnh từ thư viện</p>
+                </div>
+                
+                <!-- UX Protection / Validation Warning -->
+                <div id="pm-ux-warning" style="display:none; margin-top:10px; padding:10px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#ef4444; font-size:13px; display:flex; align-items:flex-start; gap:8px;">
+                    <span style="font-size:18px;">⚠️</span>
+                    <span id="pm-ux-warning-text">Ảnh quá xa hoặc mờ. Vui lòng chụp cận cảnh chiếc lá bị bệnh để AI phân tích chuẩn xác!</span>
+                </div>
+
+<div class="scanner-buttons">
+                    <button id="btn-camera" class="btn btn-primary">📸 Bật Camera</button>
+                    <button id="btn-capture" class="btn btn-primary" style="display:none; background:linear-gradient(135deg,#ef4444,#dc2626);">🔴 Chụp & Nhận diện</button>
+                    <label for="file-upload" class="btn btn-secondary">📂 Tải Ảnh</label>
+                    <input type="file" id="file-upload" accept="image/*" style="display:none;">
+                </div>
+            </div>
+
+            <!-- Encyclopedia Card (Hiện sau khi scan) -->
+            <div id="crop-card" class="card-content">
+                <div class="placeholder-encyc" id="placeholder-encyc">
+                    <p style="color:#94a3b8; text-align:center; padding:20px;">Quét hoặc tải ảnh cây để xem thông tin chi tiết</p>
+                </div>
+            </div>
+
+            <div id="dynamic-encyc" style="display:none;">
+                <div class="encyc-card">
+                    <div class="ec-header">
+                        <h2 id="c-name" class="crop-name">TÊN CÂY</h2>
+                        <span id="c-sci" class="crop-sci">Tên khoa học</span>
+                        <div class="ec-prob"><span>Độ tin cậy AI:</span> <strong id="c-prob">0%</strong></div>
+                        <div class="conf-track"><div id="c-bar" class="conf-fill" style="width:0%"></div></div>
+                    </div>
+
+                    <div class="ec-actions">
+                        <button class="btn-util" id="btn-open-compare">🔍 Đối chiếu</button>
+                        <button class="btn-util" id="btn-share" style="background:#3b82f6; color:white; border:none;">↗️ Chia sẻ</button>
+                        <button class="btn-util" id="btn-post-community" style="background:#16a34a; color:white; border:none;">🌐 Lên bài</button>
+                        <button class="btn-util" id="btn-save-garden" style="background:#f59e0b; color:white; border:none;">🌿 Lưu vườn</button>
+                    </div>
+
+                    <!-- Encyc sub-tabs -->
+                    <div class="encyc-tabs">
+                        <button class="encyc-tab active" data-tab="tab-overview">📊 Tổng quan</button>
+                        <button class="encyc-tab" data-tab="tab-lore">📜 Giai thoại</button>
+                        <button class="encyc-tab" data-tab="tab-care">🌱 Chăm sóc</button>
+                        <button class="encyc-tab" data-tab="tab-disease">🦠 Bệnh hại</button>
+                        <button class="encyc-tab" data-tab="tab-usage">🔬 Ứng dụng</button>
+                    </div>
+
+                    <div id="tab-overview" class="encyc-pane active">
+                        <div class="desc-box"><h4>📝 Mô tả</h4><p id="c-desc">-</p></div>
+                        <div class="stats-grid">
+                            <div class="stat-item"><span class="stat-icon">🌡️</span><p id="c-temp">-</p><small>Nhiệt độ</small></div>
+                            <div class="stat-item"><span class="stat-icon">💧</span><p id="c-rain">-</p><small>Lượng mưa</small></div>
+                            <div class="stat-item"><span class="stat-icon">⏳</span><p id="c-time">-</p><small>Vụ mùa</small></div>
+                        </div>
+                        <div class="desc-box" style="margin-top:10px;">
+                            <h4>🔬 Phân loại Khoa học</h4>
+                            <table class="sci-table">
+                                <tr><td>Tên khoa học:</td><td id="c-sci2">-</td></tr>
+                                <tr><td>Họ:</td><td id="c-family">-</td></tr>
+                                <tr><td>Mùa vụ:</td><td id="c-season">-</td></tr>
+                                <tr><td>Đất trồng:</td><td id="c-soil">-</td></tr>
+                                <tr><td>Vùng trồng:</td><td id="c-region">-</td></tr>
+                                <tr><td>Sản lượng VN:</td><td id="c-yield">-</td></tr>
+                            </table>
+                        </div>
+                        <div id="risk-alert-box" class="compare-tips" style="display:none;"></div>
+                    </div>
+
+                    <div id="tab-lore" class="encyc-pane" style="display:none;">
+                        <div class="desc-box"><h4>📜 Câu chuyện Nguồn gốc</h4><p id="c-story">-</p></div>
+                        <div class="desc-box"><h4>💡 Sự thật thú vị</h4><p id="c-fact">-</p></div>
+                        <div class="desc-box"><h4>💠 Biểu tượng học</h4><p id="c-symbol">-</p></div>
+                    </div>
+
+                    <div id="tab-care" class="encyc-pane" style="display:none;">
+                        <div class="desc-box"><h4>🌱 Mẹo Trồng & Phương pháp</h4><p id="c-tips">-</p></div>
+                        <div class="desc-box"><h4>🌤 Điều kiện Sinh trưởng</h4><p id="c-cond">-</p></div>
+                        <div class="desc-box"><h4>📐 Thuộc tính</h4>
+                            <table class="sci-table">
+                                <tr><td>Dinh dưỡng:</td><td id="c-nutrition">-</td></tr>
+                                <tr><td>Sản phẩm:</td><td id="c-products">-</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="tab-disease" class="encyc-pane" style="display:none;">
+                        <div class="warning-box">
+                            <h4>⚠️ Các Bệnh Thường Gặp</h4>
+                            <ul id="c-warnings" class="warning-list"></ul>
+                        </div>
+
+                        <!-- UC-F04: Treatment Detail -->
+                        <div id="treatment-section" style="margin-top:15px;"></div>
+
+                        <button id="btn-ask-disease" class="btn btn-primary" style="width:100%; margin-top:15px;">🤖 Hỏi AI về bệnh cây</button>
+
+                        <!-- UC-F08: Ask Expert -->
+                        <button id="btn-ask-expert" class="btn" style="width:100%; margin-top:10px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border:none; padding:12px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family: var(--font);">👨‍🔬 Hỏi Chuyên gia (Tư vấn trực tiếp)</button>
+                    </div>
+
+                    <div id="tab-usage" class="encyc-pane" style="display:none;">
+                        <div class="desc-box"><h4>🔨 Công dụng</h4><p id="c-use">-</p></div>
+                        <div class="desc-box"><h4>🖼️ Thư viện Ảnh</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                                <img id="c-gallery-healthy" src="" style="width:100%; border-radius:8px;" onerror="this.style.display='none'">
+                                <img id="c-gallery-heatmap" src="" style="width:100%; border-radius:8px;" onerror="this.style.display='none'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ TAB 4: KHU VƯỜN / TÍNH NĂNG ══ -->
+        <div class="tab-page" id="page-garden">
+            <div class="garden-header">
+                <h2>🌿 Khu Vườn Của Tôi</h2>
+                <p style="color:#64748b;">Lưu lại những cây bạn đã nhận diện</p>
+            </div>
+            <div id="my-garden-list" class="garden-list"></div>
+            <span id="garden-count" style="display:none;">0</span>
+            
+            <div style="margin-top:30px;">
+                <h3 style="margin-bottom:15px;">📊 Tính năng</h3>
+                <div class="feature-grid">
+                    <div class="feature-card" id="btn-dashboard"><span>📈</span><p>Thống kê</p></div>
+                    <div class="feature-card" onclick="document.getElementById('btn-toggle-chat').click()"><span>🤖</span><p>Hỏi AI</p></div>
+                    <div class="feature-card" onclick="switchTab('page-camera')"><span>📸</span><p>Quét cây</p></div>
+                    <div class="feature-card" onclick="switchTab('page-search')"><span>🔍</span><p>Tìm kiếm</p></div>
+                    <div class="feature-card" id="btn-feature-expert" onclick="window.open('/expert.html','_blank')" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac; display:none;"><span>👨‍🔬</span><p>Chuyên gia</p></div>
+                    <div class="feature-card" id="btn-feature-admin" onclick="window.open('/admin.html','_blank')" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd; display:none;"><span>⚙️</span><p>Quản trị</p></div>
+                </div>
+            </div>
+            <!-- UC-F08: Expert Inbox -->
+            <div style="margin-top:30px;">
+                <h3 style="margin-bottom:12px;">📩 Hộp Thư Chuyên Gia</h3>
+                <div id="expert-inbox-list" style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="text-align:center;padding:20px;color:#94a3b8;background:#f8fafc;border-radius:12px;">Đang tải hộp thư...</div>
+                </div>
+            </div>
+
+            <!-- UC-F05: Scan History with Filters -->
+            <div style="margin-top:30px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3>📋 Lịch Sử Quét</h3>
+                    <button id="btn-clear-all-history" style="background:#fef2f2;color:#ef4444;border:1px solid #fecaca;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">🗑️ Xóa tất cả</button>
+                </div>
+                <!-- Filter bar -->
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                    <select id="history-filter-crop" onchange="filterHistory()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;font-family:var(--font);font-size:13px;flex:1;min-width:100px;">
+                        <option value="">🌿 Tất cả cây</option>
+                        <option value="rice">🌾 Lúa</option>
+                        <option value="corn">🌽 Ngô</option>
+                        <option value="cassava">🥔 Sắn</option>
+                        <option value="sugarcane">🎋 Mía</option>
+                        <option value="soybean">🌱 Đậu nành</option>
+                        <option value="sweet_potato">🍠 Khoai lang</option>
+                        <option value="potato">🥔 Khoai tây</option>
+                        <option value="wheat">🌾 Lúa mì</option>
+                    </select>
+                    <select id="history-filter-status" onchange="filterHistory()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;font-family:var(--font);font-size:13px;flex:1;min-width:100px;">
+                        <option value="">📊 Tất cả</option>
+                        <option value="healthy">✅ Khỏe (>70%)</option>
+                        <option value="warning">⚠️ Cảnh báo (45-70%)</option>
+                        <option value="danger">🚨 Nguy hiểm (<45%)</option>
+                    </select>
+                </div>
+                <div id="history-count" style="font-size:12px;color:#94a3b8;margin-bottom:8px;"></div>
+                <div id="history-full-list" style="max-height:400px;overflow-y:auto;"></div>
+            </div>
+        </div>
+
+        <!-- ══ TAB 5: PROFILE (RE-DESIGNED) ══ -->
+        <div class="tab-page" id="page-profile">
+            <div class="social-profile-container">
+                <!-- Cover Photo -->
+                <div class="profile-cover">
+                    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Cover" id="profile-cover-img">
+                    <button class="btn-edit-cover" title="Đổi ảnh bìa">📷</button>
+                </div>
+                
+                <!-- Profile Info Header -->
+                <div class="profile-main-info">
+                    <div class="profile-avatar-wrapper">
+                        <div class="profile-avatar" id="profile-avatar">N</div>
+                        <button class="btn-edit-avatar" title="Đổi ảnh đại diện">📷</button>
+                    </div>
+                    
+                    <div class="profile-identity">
+                        <h2 id="profile-name">Nhà Nông Ẩn Danh</h2>
+                        <p id="profile-email">Chưa đăng nhập</p>
+                        <p id="profile-bio">Chưa có tiểu sử. Hãy giới thiệu về bản thân bạn!</p>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" id="btn-login" style="display:none;">Đăng nhập / Đăng ký</button>
+                        <button class="btn btn-secondary" id="btn-edit-profile">✏️ Chỉnh sửa hồ sơ</button>
+                        <button class="btn btn-icon-only">💬</button>
+                    </div>
+                </div>
+
+                <!-- Profile Stats Row -->
+                <div class="profile-social-stats">
+                    <div class="ps-item"><strong id="prof-scan-count">0</strong><span>Lần quét</span></div>
+                    <div class="ps-item"><strong id="prof-garden-count">0</strong><span>Khu vườn</span></div>
+                    <div class="ps-item"><strong id="prof-post-count">0</strong><span>Bài viết</span></div>
+                    <div class="ps-item"><strong id="prof-friend-count">0</strong><span>Bạn bè</span></div>
+                </div>
+
+                <!-- Profile Tabs -->
+                <div class="profile-tabs">
+                    <button class="p-tab active" data-ptab="p-posts">Bài viết</button>
+                    <button class="p-tab" data-ptab="p-friends">Bạn bè</button>
+                    <button class="p-tab" data-ptab="p-about">Giới thiệu</button>
+                </div>
+
+                <!-- Tab Panes -->
+                <div class="profile-content-panes">
+                    <!-- Posts Pane -->
+                    <div id="p-posts" class="p-pane active">
+                        <div class="profile-posts-grid" id="profile-posts-display">
+                            <div class="empty-state">
+                                <span style="font-size: 40px;">📮</span>
+                                <p>Chưa có bài đăng nào.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Friends Pane -->
+                    <div id="p-friends" class="p-pane" style="display:none;">
+                        <div class="friends-list-grid">
+                            <div class="friend-card"><div class="f-avatar">A</div><p>Anh Tuấn</p></div>
+                            <div class="friend-card"><div class="f-avatar" style="background:#f59e0b;">M</div><p>Minh Hạnh</p></div>
+                            <div class="friend-card"><div class="f-avatar" style="background:#3b82f6;">H</div><p>Hoàng Nam</p></div>
+                        </div>
+                    </div>
+
+                    <!-- About Pane -->
+                    <div id="p-about" class="p-pane" style="display:none;">
+                        <div class="profile-menu">
+                            <div class="pm-item" id="btn-clear-history">🗑️ Xóa lịch sử quét</div>
+                            <div class="pm-item">⚙️ Cài đặt</div>
+                            <div class="pm-item">❓ Trợ giúp</div>
+                            <div class="pm-item" id="btn-logout-drop" style="color:#ef4444; border-top:1px solid #f1f5f9;">🚪 Đăng xuất</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="right-sidebar">
+            <div class="sidebar-widget alerts-widget">
+                <h3 style="color:#ef4444; font-size:15px; margin-bottom:10px;">⚠️ Cảnh báo Dịch Bệnh</h3>
+                <div class="alert-item">🔴 Đạo Ôn lúa đang bùng phát ở ĐBSCL</div>
+                <div class="alert-item">🟡 Sâu keo mùa thu phá hoại ngô miền Trung</div>
+            </div>
+            
+            <div class="sidebar-widget tips-widget" style="margin-top:15px;">
+                <h3 style="color:#3b82f6; font-size:15px; margin-bottom:10px;">💡 Mẹo Nông nghiệp</h3>
+                <p style="font-size:13px; color:#475569; line-height:1.5;">Nên bón phân NPK vào lúc sáng sớm hoặc chiều mát để cây hấp thụ tốt nhất, tránh thất thoát do bay hơi.</p>
+            </div>
+        </aside>
+    </div> <!-- End app-container -->
+
+
+    <!-- ═══ GARDEN DETAIL MODAL ═══ -->
+    <div id="garden-detail-modal" class="cmt-modal-overlay" style="display:none;" onclick="closeGardenDetail(event)">
+        <div class="gd-modal-card" onclick="event.stopPropagation()">
+            <div class="gd-modal-header">
+                <h3 id="gd-name">Tên cây</h3>
+                <button class="cmt-modal-close" onclick="closeGardenDetail()">✕</button>
+            </div>
+            <div class="gd-modal-body">
+                <img id="gd-img" class="gd-modal-img" src="" alt="">
+                <div class="gd-modal-info">
+                    <p class="gd-sci-name" id="gd-sci"></p>
+                    <p class="gd-date-label" id="gd-date"></p>
+                    <div class="gd-prob-bar">
+                        <span>Độ tin cậy: <strong id="gd-prob">0%</strong></span>
+                        <div class="gd-bar-bg"><div class="gd-bar-fill" id="gd-bar"></div></div>
+                    </div>
+                </div>
+
+                <div class="gd-section">
+                    <h4>📝 Mô tả</h4>
+                    <p id="gd-desc">N/A</p>
+                </div>
+                <div class="gd-section">
+                    <h4>🌡️ Điều kiện sinh trưởng</h4>
+                    <div class="gd-grid">
+                        <div><span>🌡️ Nhiệt độ</span><strong id="gd-temp">N/A</strong></div>
+                        <div><span>🌧️ Lượng mưa</span><strong id="gd-rain">N/A</strong></div>
+                        <div><span>⏱️ Sinh trưởng</span><strong id="gd-time">N/A</strong></div>
+                    </div>
+                </div>
+                <div class="gd-section">
+                    <h4>🔬 Phân loại khoa học</h4>
+                    <div class="gd-grid">
+                        <div><span>👪 Họ</span><strong id="gd-family">N/A</strong></div>
+                        <div><span>📅 Mùa vụ</span><strong id="gd-season">N/A</strong></div>
+                        <div><span>🌍 Đất</span><strong id="gd-soil">N/A</strong></div>
+                        <div><span>📍 Vùng trồng</span><strong id="gd-region">N/A</strong></div>
+                        <div><span>📊 Sản lượng</span><strong id="gd-yield">N/A</strong></div>
+                    </div>
+                </div>
+                <div class="gd-section">
+                    <h4>📖 Câu chuyện</h4>
+                    <p id="gd-story">N/A</p>
+                </div>
+                <div class="gd-section">
+                    <h4>🌱 Mẹo trồng cây</h4>
+                    <p id="gd-tips">N/A</p>
+                </div>
+                <div class="gd-section">
+                    <h4>🍽️ Dinh dưỡng</h4>
+                    <p id="gd-nutrition">N/A</p>
+                </div>
+                <div class="gd-section">
+                    <h4>⚙️ Ứng dụng</h4>
+                    <p id="gd-use">N/A</p>
+                </div>
+                <div class="gd-section">
+                    <h4>⚠️ Bệnh hại thường gặp</h4>
+                    <ul id="gd-warnings" class="gd-warning-list"><li>Không có dữ liệu</li></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ BOTTOM NAVIGATION BAR ═══ -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <button class="bnav-item active" data-page="page-community">
+            <span class="bnav-icon">🌐</span>
+            <span class="bnav-label">Cộng đồng</span>
+        </button>
+        <button class="bnav-item" data-page="page-search">
+            <span class="bnav-icon">🔍</span>
+            <span class="bnav-label">Tìm kiếm</span>
+        </button>
+        <button class="bnav-item bnav-camera" data-page="page-camera">
+            <span class="bnav-camera-circle">📷</span>
+        </button>
+        <button class="bnav-item" data-page="page-garden">
+            <span class="bnav-icon">🌿</span>
+            <span class="bnav-label">Khu vườn</span>
+        </button>
+        <button class="bnav-item" data-page="page-profile">
+            <span class="bnav-icon">👤</span>
+            <span class="bnav-label">Hồ sơ</span>
+        </button>
+    </nav>
+
+    <!-- ═══ COMMENT MODAL (Facebook Post Detail Style) ═══ -->
+    <div id="comment-modal" class="cmt-modal-overlay" style="display:none;" onclick="closeCommentModal(event)">
+        <div class="cmt-modal-card" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="cmt-modal-header">
+                <h3 id="cmt-modal-title">Bài viết</h3>
+                <button class="cmt-modal-close" onclick="closeCommentModal()">✕</button>
+            </div>
+            <!-- Scrollable body: post + comments -->
+            <div class="cmt-modal-body" id="cmt-modal-body">
+                <!-- Post content rendered by JS -->
+                <div id="cmt-modal-post"></div>
+                <!-- Divider -->
+                <div class="cmt-modal-divider">
+                    <span id="cmt-modal-sort">Phù hợp nhất ▾</span>
+                </div>
+                <!-- Comment list -->
+                <div id="cmt-modal-list"></div>
+            </div>
+            <!-- Sticky input -->
+            <div class="cmt-modal-input">
+                <div class="cmt-modal-avatar" id="cmt-modal-avatar">B</div>
+                <input type="text" id="cmt-modal-input-field" placeholder="Viết bình luận..." onkeypress="if(event.key==='Enter')submitModalComment()">
+                <button class="cmt-modal-send" onclick="submitModalComment()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ POST MODAL ═══ -->
+    <div id="post-modal" class="post-modal-overlay" style="display:none;">
+        <div class="post-modal-card">
+            <div class="pm-header">
+                <h3>Tạo bài viết</h3>
+                <button class="pm-close" onclick="closePostModal()">✕</button>
+            </div>
+            <div class="pm-user-row">
+                <div class="pm-avatar" id="pm-avatar-letter">N</div>
+                <div>
+                    <div class="pm-username" id="pm-username">Nhà Nông Ẩn Danh</div>
+                    <div class="pm-scope">🌍 Công khai</div>
+                </div>
+            </div>
+            <textarea id="post-caption-input" class="pm-textarea" placeholder="Chia sẻ kinh nghiệm trồng trọt... 🌾" rows="4"></textarea>
+            <div class="pm-preview" id="pm-img-preview" style="display:none;">
+                <img id="pm-preview-img" src="">
+                <span class="pm-crop-tag" id="pm-crop-tag"></span>
+            </div>
+            <div class="pm-actions-bar">
+                <span style="font-size:13px; color:#64748b;">Thêm vào:</span>
+                <div style="display:flex; gap:8px;">
+                    <button class="pm-action-icon" onclick="attachScanImage()">📸</button>
+                    <button class="pm-action-icon">📍</button>
+                    <button class="pm-action-icon">😊</button>
+                </div>
+            </div>
+            <button id="btn-submit-post" class="pm-submit-btn" onclick="submitPost()">Đăng bài</button>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content auth-box">
+            <div class="auth-header"><h3>ĐĂNG NHẬP / ĐĂNG KÝ</h3></div>
+            <form id="auth-form" class="auth-form">
+                <div class="input-group"><input type="email" id="auth-email" placeholder="Email" required></div>
+                <div class="input-group register-only" style="display:none;"><input type="text" id="auth-lastname" placeholder="Họ"></div>
+                <div class="input-group register-only" style="display:none;"><input type="text" id="auth-firstname" placeholder="Tên"></div>
+                <div class="input-group">
+                    <input type="password" id="auth-password" placeholder="Mật khẩu" required>
+                    <span class="toggle-pass" onclick="togglePassword('auth-password')">👁️</span>
+                </div>
+                <div class="input-group register-only" style="display:none;">
+                    <input type="password" id="auth-confirm-password" placeholder="Xác nhận mật khẩu">
+                    <span class="toggle-pass" onclick="togglePassword('auth-confirm-password')">👁️</span>
+                </div>
+                <button type="submit" id="btn-auth-submit" class="btn-auth-submit">ĐĂNG NHẬP</button>
+            </form>
+            
+            <div class="auth-divider">
+                <span>Hoặc đăng nhập bằng</span>
+            </div>
+            
+            <div class="social-auth-group">
+                <button class="btn-social google" id="btn-google-login">
+                    <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google">
+                    Google
+                </button>
+                <button class="btn-social facebook" id="btn-facebook-login">
+                    <img src="https://img.icons8.com/fluency/48/000000/facebook-new.png" alt="Facebook">
+                    Facebook
+                </button>
+            </div>
+
+            <!-- ═══ EDIT PROFILE MODAL (PREMIUM) ═══ -->
+    <div id="edit-profile-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content ep-modal">
+            <div class="ep-header">
+                <h3>Chỉnh Sửa Hồ Sơ</h3>
+                <button class="btn-close-modal" id="btn-close-ep">×</button>
+            </div>
+            <div class="ep-body">
+                <div class="ep-field">
+                    <label>Họ và tên</label>
+                    <input type="text" id="ep-name" placeholder="Nhập tên của bạn...">
+                </div>
+                <div class="ep-field">
+                    <label>Tiểu sử</label>
+                    <textarea id="ep-bio" rows="3" placeholder="Giới thiệu ngắn gọn về bạn..."></textarea>
+                </div>
+                <div class="ep-field">
+                    <label>Link ảnh đại diện</label>
+                    <input type="text" id="ep-avatar-url" placeholder="https://...">
+                </div>
+                <div class="ep-field">
+                    <label>Link ảnh bìa</label>
+                    <input type="text" id="ep-cover-url" placeholder="https://...">
+                </div>
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:14px 0;">
+                <h4 style="font-size:14px;color:#16a34a;margin-bottom:10px;">🌾 Thông tin Trang trại</h4>
+                <div class="ep-field">
+                    <label>📍 Địa chỉ / Khu vực</label>
+                    <input type="text" id="ep-farm-location" placeholder="VD: Cần Thơ, Long An...">
+                </div>
+                <div class="ep-field">
+                    <label>📐 Diện tích canh tác (ha)</label>
+                    <input type="number" id="ep-farm-area" placeholder="VD: 2.5" step="0.1" min="0">
+                </div>
+                <div class="ep-field">
+                    <label>🌿 Cây trồng chính</label>
+                    <select id="ep-main-crop" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px;">
+                        <option value="">-- Chọn cây trồng chính --</option>
+                        <option value="rice">🌾 Lúa</option>
+                        <option value="corn">🌽 Ngô</option>
+                        <option value="cassava">🥔 Sắn</option>
+                        <option value="sugarcane">🎋 Mía</option>
+                        <option value="soybean">🌱 Đậu nành</option>
+                        <option value="sweet_potato">🍠 Khoai lang</option>
+                        <option value="potato">🥔 Khoai tây</option>
+                        <option value="wheat">🌾 Lúa mì</option>
+                    </select>
+                </div>
+                <div class="ep-field">
+                    <label>📞 Số điện thoại</label>
+                    <input type="tel" id="ep-phone" placeholder="VD: 0912345678">
+                </div>
+            </div>
+            <div class="ep-footer">
+                <button class="btn btn-secondary" id="btn-cancel-ep">Hủy</button>
+                <button class="btn btn-primary" id="btn-save-ep">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-footer">
+                <a href="#" id="btn-forgot-pass" style="display:block;text-align:center;margin-bottom:10px;color:#3b82f6;font-size:13px;text-decoration:none;font-weight:600;">🔒 Quên mật khẩu?</a>
+                <span id="auth-switch-text">Chưa có tài khoản?</span>
+                <a href="#" id="auth-switch-link">Đăng ký</a>
+            </div>
+            <button class="close-modal" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; cursor:pointer; color:#64748b;">&times;</button>
+        </div>
+    </div>
+
+    <!-- Compare Modal — Premium Redesign -->
+    <div id="compare-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content comparison-box">
+
+            <!-- Header -->
+            <div class="cmp-header">
+                <div class="cmp-header-left">
+                    <span class="cmp-header-icon">🔍</span>
+                    <div>
+                        <div class="cmp-header-title" id="cmp-title">So Sánh Đối Chiếu</div>
+                        <div class="cmp-header-sub" id="cmp-subtitle">Đang phân tích...</div>
+                    </div>
+                </div>
+                <button class="cmp-close-btn" id="btn-close-compare">✕</button>
+            </div>
+
+            <!-- Body -->
+            <div class="cmp-body">
+
+                <!-- Status Banner -->
+                <div class="cmp-status-banner status-healthy" id="cmp-status-banner">
+                    <span class="cmp-status-icon" id="cmp-status-icon">✅</span>
+                    <div class="cmp-status-text">
+                        <div class="cmp-status-title" id="cmp-status-title">Cây Khỏe Mạnh</div>
+                        <div class="cmp-status-desc" id="cmp-status-desc">Không phát hiện dấu hiệu bệnh nghiêm trọng</div>
+                    </div>
+                    <div class="cmp-status-prob" id="cmp-status-prob">–</div>
+                </div>
+
+                <!-- 3 Image Cards -->
+                <div class="cmp-imgs-row">
+                    <!-- Your scan -->
+                    <div class="cmp-img-card yours">
+                        <div class="cmp-img-wrap">
+                            <img id="compare-scan-img" src="" alt="Ảnh của bạn" onerror="this.parentElement.innerHTML='<div class=\'cmp-img-no-img\'>📸<span>Chưa có ảnh</span></div>'">
+                        </div>
+                        <div class="cmp-img-label">
+                            <div class="cmp-img-label-badge">📸 Ảnh của bạn</div>
+                            <div class="cmp-img-label-text" id="cmp-your-label">Mẫu vừa quét</div>
+                        </div>
+                    </div>
+                    <!-- Healthy reference -->
+                    <div class="cmp-img-card healthy">
+                        <div class="cmp-img-wrap">
+                            <img id="compare-healthy-img" src="" alt="Cây khỏe mạnh" onerror="this.parentElement.innerHTML='<div class=\'cmp-img-no-img\'>🌿<span>Mẫu tham chiếu</span></div>'">
+                        </div>
+                        <div class="cmp-img-label">
+                            <div class="cmp-img-label-badge">✅ Cây khỏe</div>
+                            <div class="cmp-img-label-text">Mẫu chuẩn khỏe mạnh</div>
+                        </div>
+                    </div>
+                    <!-- Disease reference -->
+                    <div class="cmp-img-card disease">
+                        <div class="cmp-img-wrap">
+                            <img id="compare-disease-img" src="" alt="Cây bị bệnh" onerror="this.parentElement.innerHTML='<div class=\'cmp-img-no-img\'>🦠<span>Mẫu bệnh</span></div>'">
+                        </div>
+                        <div class="cmp-img-label">
+                            <div class="cmp-img-label-badge">🦠 Mẫu bệnh</div>
+                            <div class="cmp-img-label-text" id="cmp-disease-label">Dạng bệnh điển hình</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Table -->
+                <div class="cmp-section">
+                    <div class="cmp-section-header">📊 Bảng So Sánh Đặc Điểm</div>
+                    <div class="cmp-table-header">
+                        <div>Đặc điểm</div>
+                        <div class="th-healthy">✅ Khỏe mạnh</div>
+                        <div class="th-disease">🦠 Bị bệnh</div>
+                    </div>
+                    <div id="cmp-table-body">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Recognition Checklist -->
+                <div class="cmp-section">
+                    <div class="cmp-section-header">🔎 Dấu hiệu Nhận biết</div>
+                    <div class="cmp-checklist" id="cmp-checklist">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Care Tips -->
+                <div class="cmp-section">
+                    <div class="cmp-section-header">💡 Khuyến Nghị Chăm Sóc</div>
+                    <div class="cmp-tips" id="cmp-tips-body">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- UC-F08: Expert Request Modal -->
+    <div id="expert-request-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="max-width:480px;">
+            <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:18px 20px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
+                <div style="color:white;"><div style="font-size:18px;font-weight:800;">👨‍🔬 Hỏi Chuyên Gia</div><div style="font-size:12px;opacity:0.85;">Gửi yêu cầu tư vấn trực tiếp</div></div>
+                <button onclick="document.getElementById('expert-request-modal').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;">✕</button>
+            </div>
+            <div style="padding:20px;">
+                <div id="expert-ai-info" style="background:#fef3c7;border:1px solid #fcd34d;border-radius:12px;padding:12px;margin-bottom:14px;font-size:13px;color:#92400e;"></div>
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">📝 Mô tả triệu chứng</label>
+                <textarea id="expert-note" placeholder="VD: Lá bắt đầu vàng từ 3 ngày trước, xuất hiện đốm nâu ở gốc..." style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px;min-height:80px;resize:vertical;"></textarea>
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin:12px 0 6px;">📍 Địa điểm trang trại</label>
+                <input id="expert-location" placeholder="VD: Cần Thơ, Long An..." style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px;">
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin:12px 0 6px;">⚡ Mức độ khẩn cấp</label>
+                <select id="expert-urgency" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px;">
+                    <option value="normal">🟡 Bình thường</option>
+                    <option value="urgent">🔴 Khẩn cấp</option>
+                </select>
+                <button id="btn-submit-expert" onclick="submitExpertRequest()" style="width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">📩 Gửi Yêu Cầu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Modal -->
+    <div id="modal-dashboard" class="modal-overlay" style="display:none;">
+        <div class="modal-content" id="pdf-report-content">
+            <div class="modal-header"><h2>📈 Báo Cáo</h2><button id="btn-close-modal" class="btn-close">✖</button></div>
+            <div class="modal-body">
+                <p id="report-date"></p><p id="report-location"></p>
+                <div class="chart-container"><canvas id="cropChart"></canvas></div>
+                <ul id="summary-list"></ul>
+            </div>
+            <div class="modal-footer"><button id="btn-export-pdf" class="btn btn-primary">📥 Xuất PDF</button></div>
+        </div>
+    </div>
+
+    <!-- Treatment Modal -->
+    <div id="treat-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content treatment-panel">
+            <button class="btn-close-modal" id="btn-close-treat">×</button>
+            <h3 id="treat-title">Phác đồ Điều trị</h3>
+            <div class="treat-section"><strong>🚨 Xử lý khẩn cấp:</strong><p id="treat-emergency"></p></div>
+            <div class="treat-section"><strong>💊 Hóa học:</strong><p id="treat-chemical"></p></div>
+            <div class="treat-section"><strong>🍃 Sinh học:</strong><p id="treat-biological"></p></div>
+        </div>
+    </div>
+
+    <!-- AI Chat -->
+    <div class="ai-chat-btn" id="btn-toggle-chat">🤖</div>
+    <div class="ai-chat-window" id="chat-window" style="display:none;">
+        <div class="chat-header">
+            <span>🤖 Trợ lý AI</span>
+            <button id="btn-close-chat">×</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="msg bot">Chào bạn! Tôi là chuyên gia AI. Cần tư vấn gì không?</div>
+        </div>
+        <div class="chat-input-box">
+            <input type="text" id="chat-textarea" placeholder="Hỏi AI...">
+            <button id="btn-send-chat">➔</button>
+        </div>
+    </div>
+
+    <canvas id="hidden-canvas" style="display:none;"></canvas>
+    <script src="app_premium_v3.js?v=7.0"></script>
+    <!-- Notifications Container -->
+    <div id="notification-container" class="notification-container"></div>
+</body>
+</html>
