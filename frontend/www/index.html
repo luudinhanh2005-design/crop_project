@@ -1249,7 +1249,11 @@
                         </div>
                         <div class="overflow-hidden">
                             <div id="sidebar-name" class="font-bold text-on-surface truncate text-sm">Người dùng</div>
+<<<<<<< HEAD
                             <div id="sidebar-handle" class="text-[12px] text-on-surface-variant truncate mt-0.5 hidden">@user
+=======
+                            <div id="sidebar-handle" class="text-[12px] text-on-surface-variant truncate mt-0.5">@user
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                             </div>
                         </div>
                     </div>
@@ -3281,16 +3285,28 @@
             </div>
         </div>
 
+<<<<<<< HEAD
         <div id="comment-modal" onclick="closeCommentModal(event)" class="cmt-modal-overlay hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] items-center justify-center p-4 lg:p-8">
             <div class="bg-surface w-full max-w-[700px] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] lg:max-h-[85vh] animate-fade-in-up overflow-hidden">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant bg-surface relative">
                     <div class="w-8"></div>
                     <h3 id="cmt-modal-title" class="font-bold text-[17px] text-on-surface text-center flex-1">Bài viết</h3>
                     <button onclick="closeCommentModal()" class="w-9 h-9 bg-surface-container-high hover:bg-surface-variant rounded-full flex items-center justify-center text-on-surface-variant transition-colors">
+=======
+        <div id="comment-modal"
+            class="cmt-modal-overlay hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] items-center justify-center p-4">
+            <div
+                class="bg-surface w-full max-w-[500px] rounded-3xl shadow-2xl flex flex-col max-h-[85vh] animate-fade-in-up">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
+                    <h3 class="font-bold text-lg text-on-surface">Bình luận bài viết</h3>
+                    <button onclick="closeCommentModal()"
+                        class="w-8 h-8 rounded-full hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors">
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                         <span class="material-symbols-outlined text-[20px]">close</span>
                     </button>
                 </div>
 
+<<<<<<< HEAD
                 <div class="overflow-y-auto flex-1 flex flex-col no-scrollbar bg-surface relative">
                     <div id="cmt-modal-post-content" class="px-0 pt-0 pb-2 border-b border-outline-variant/50">
                         <!-- Post content injected here dynamically -->
@@ -3317,6 +3333,25 @@
                                 <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">send</span>
                             </button>
                         </div>
+=======
+                <div id="cmt-modal-list" class="p-6 overflow-y-auto flex-1 flex flex-col gap-5 no-scrollbar">
+                    <div class="text-center py-10 text-on-surface-variant">Đang tải bình luận...</div>
+                </div>
+
+                <div
+                    class="p-4 border-t border-outline-variant bg-surface-container-lowest rounded-b-3xl flex items-center gap-3">
+                    <img id="cmt-current-avatar" src="https://ui-avatars.com/api/?name=User&background=0d631b&color=fff"
+                        class="w-10 h-10 rounded-full object-cover border border-outline-variant">
+                    <div class="flex-1 relative">
+                        <input type="text" id="cmt-input-field"
+                            class="w-full bg-surface-container-low border border-outline-variant rounded-full pl-4 pr-12 py-2.5 text-[15px] focus:ring-2 focus:ring-primary outline-none"
+                            placeholder="Viết bình luận của bạn...">
+                        <button onclick="submitModalComment()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[20px]"
+                                style="font-variation-settings: 'FILL' 1;">send</span>
+                        </button>
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                     </div>
                     <input type="hidden" id="cmt-modal-target-id">
                 </div>
@@ -4863,6 +4898,7 @@
             </div>
         </div>
 
+<<<<<<< HEAD
         <!-- Image Lightbox Modal -->
         <div id="image-lightbox" onclick="this.style.display='none'; document.body.style.overflow=''"
             class="hidden fixed inset-0 z-[99999] bg-black/90 backdrop-blur-sm items-center justify-center cursor-zoom-out"
@@ -4876,6 +4912,8 @@
                 onclick="event.stopPropagation()">
         </div>
 
+=======
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
 </body>
 
 </html>

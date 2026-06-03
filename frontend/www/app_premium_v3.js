@@ -2045,6 +2045,7 @@ window.fetchExpertQnA = async function (skipStats = false) {
     try {
         if (!skipStats) {
             // 1. Lấy chuyên gia (Top Experts)
+<<<<<<< HEAD
             try {
                 const resExp = await fetch('/api/experts/top');
                 const expData = await resExp.json();
@@ -2081,6 +2082,32 @@ window.fetchExpertQnA = async function (skipStats = false) {
                 }
             } catch (err) {
                 console.error("Lỗi lấy chuyên gia nổi bật", err);
+=======
+            const { data: experts, error: expErr } = await window.supabaseClient
+                .from('profiles')
+                .select('id, full_name, avatar_url, role, username')
+                .eq('role', 'expert')
+                .limit(3);
+
+            if (experts) {
+                if (statsOnline) statsOnline.innerText = experts.length;
+
+                if (expertList) {
+                    expertList.innerHTML = experts.map((exp, idx) => `
+                        <div class="flex items-center gap-3 cursor-pointer hover:bg-surface-container-lowest transition-colors p-2 rounded-xl" onclick="window.targetProfileId='${exp.id}'; switchTab('page-profile');">
+                            <div class="relative">
+                                <img alt="Expert Avatar" class="w-12 h-12 rounded-full object-cover" src="${exp.avatar_url || 'https://i.pravatar.cc/150?u=' + exp.id}"/>
+                                <span class="absolute bottom-0 right-0 w-3 h-3 ${idx === 0 ? 'bg-secondary-container' : 'bg-surface-variant'} border-2 border-surface-container-lowest rounded-full"></span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-label-lg text-label-lg text-on-background">${exp.full_name}</h4>
+                                <p class="font-label-md text-label-md text-on-surface-variant">@${exp.username || 'chuyengia'}</p>
+                            </div>
+                            <button onclick="event.stopPropagation(); askSpecificExpert('${exp.id}');" class="text-primary border border-primary font-label-md text-label-md px-3 py-1 rounded-full hover:bg-surface-container-low transition-colors">Tư vấn</button>
+                        </div>
+                    `).join('');
+                }
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
             }
 
             // Lấy tổng số câu đã giải đáp
@@ -2236,6 +2263,10 @@ window.fetchCommunityFeed = async function () {
 
     if (loadingState) loadingState.style.display = 'block';
     if (emptyState) emptyState.style.display = 'none';
+<<<<<<< HEAD
+=======
+    feedContainer.querySelectorAll('.agri-post-card').forEach(el => el.remove());
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
 
     try {
         let posts, error;
@@ -2266,6 +2297,7 @@ window.fetchCommunityFeed = async function () {
 
         if (error) throw error;
         if (loadingState) loadingState.style.display = 'none';
+<<<<<<< HEAD
         
         // Remove existing posts immediately before rendering to prevent race conditions
         feedContainer.querySelectorAll('.agri-post-card').forEach(el => el.remove());
@@ -2279,6 +2311,14 @@ window.fetchCommunityFeed = async function () {
         // Cache the posts for other UI interactions
         window.postsCache = posts;
 
+=======
+
+        if (!posts || posts.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            return;
+        }
+
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
         posts.forEach(post => {
             const postHtml = renderSinglePost(post);
             feedContainer.insertAdjacentHTML('beforeend', postHtml);
@@ -2342,19 +2382,31 @@ function renderSinglePost(post) {
 
             ${post.image_url && post.image_url !== 'NULL' ? `
                 <div class="w-full max-h-80 overflow-hidden bg-surface-container-highest flex items-center justify-center">
+<<<<<<< HEAD
                     <img src="${post.image_url}" class="w-full object-cover cursor-pointer" loading="lazy" onclick="openCommentModal('${post.id}')">
+=======
+                    <img src="${post.image_url}" class="w-full object-cover" loading="lazy">
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                 </div>
             ` : ''}
 
             <div class="p-5">
                 <div class="flex justify-between items-center mb-4">
+<<<<<<< HEAD
                     <div class="flex items-center gap-2 cursor-pointer hover:underline" onclick="if(window.showLikesModal) window.showLikesModal('${post.id}')">
+=======
+                    <div class="flex items-center gap-2">
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                         <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                             <span class="material-symbols-outlined text-[12px] text-white" style="font-variation-settings: 'FILL' 1;">thumb_up</span>
                         </div>
                         <span class="text-[13px] font-bold text-on-surface-variant" id="like-count-${post.id}">${likeCount}</span>
                     </div>
+<<<<<<< HEAD
                     <span class="text-[13px] font-bold text-on-surface-variant cursor-pointer hover:underline" id="comment-count-${post.id}" onclick="openCommentModal('${post.id}')">${commentCount} Bình luận</span>
+=======
+                    <span class="text-[13px] font-bold text-on-surface-variant" id="comment-count-${post.id}">${commentCount} Bình luận</span>
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                 </div>
                 
                 <div class="flex border-t border-outline-variant pt-4 gap-2">
@@ -3091,6 +3143,7 @@ window.submitPost = async function () {
 // =================== PREMIUM COMMENTS =========================== //
 // ================================================================ //
 
+<<<<<<< HEAD
 window.openLightbox = function(src) {
     const lb = document.getElementById('image-lightbox');
     const img = document.getElementById('lightbox-img');
@@ -3183,17 +3236,23 @@ window.showLikesModal = async function(postId) {
     }
 };
 
+=======
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
 window.openCommentModal = async function (postId) {
     const safePostId = String(postId);
     const modal = document.getElementById('comment-modal');
     const hiddenInput = document.getElementById('cmt-modal-target-id');
+<<<<<<< HEAD
     const title = document.getElementById('cmt-modal-title');
     const postContentContainer = document.getElementById('cmt-modal-post-content');
+=======
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
 
     if (!modal || !hiddenInput) return;
     hiddenInput.value = safePostId;
     window.STRICT_POST_ID_LOCK = safePostId;
 
+<<<<<<< HEAD
     // Tìm bài viết để render vào phần trên của modal
     if (window.postsCache) {
         const post = window.postsCache.find(p => p.id === safePostId);
@@ -3254,6 +3313,8 @@ window.openCommentModal = async function (postId) {
         }
     }
 
+=======
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     renderModalComments(safePostId);
@@ -3281,6 +3342,7 @@ async function renderModalComments(postId) {
 
         list.innerHTML = comments.map(c => {
             const displayName = c.profiles?.full_name || 'Nhà nông';
+<<<<<<< HEAD
             const timeString = window.timeAgo ? window.timeAgo(c.created_at) : 'Vừa xong';
             return `
                 <div class="cmt-item mb-4 flex gap-2">
@@ -3295,6 +3357,14 @@ async function renderModalComments(postId) {
                             <button onclick="this.classList.toggle('text-primary'); this.classList.toggle('font-bold');" class="hover:text-primary transition-colors">Thích</button>
                             <button onclick="const input = document.getElementById('cmt-input-field'); input.value = '@${displayName} ' + input.value; input.focus();" class="hover:text-primary transition-colors">Trả lời</button>
                         </div>
+=======
+            return `
+                <div class="cmt-item mb-4 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-xs">${displayName.charAt(0)}</div>
+                    <div class="bg-gray-100 p-3 rounded-xl shadow-sm text-sm w-full">
+                        <div class="font-bold mb-1">${displayName}</div>
+                        <div>${c.content}</div>
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                     </div>
                 </div>
             `;
@@ -3324,6 +3394,7 @@ window.submitModalComment = async function () {
 
         if (data.success) {
             showToast("Đã gửi bình luận!", "success");
+<<<<<<< HEAD
             
             // Cập nhật số đếm ở bài viết bên ngoài
             const countEl = document.getElementById(`comment-count-${postId}`);
@@ -3359,6 +3430,9 @@ window.submitModalComment = async function () {
                 list.scrollTop = list.scrollHeight;
             }
 
+=======
+            renderModalComments(postId);
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
             // Tạo thông báo cho chủ bài viết
             const commentedPost = (window.postsCache || []).find(p => p.id === postId);
             if (commentedPost && commentedPost.user_id) {
@@ -7004,6 +7078,100 @@ window.toggleLike = async function (btnElement, postId) {
         fetchCommunityFeed();
     }
 };
+<<<<<<< HEAD
+=======
+
+window.openCommentModal = async function (postId) {
+    const modal = document.getElementById('comment-modal');
+    if (!modal) return;
+
+    document.getElementById('cmt-modal-target-id').value = postId;
+    document.getElementById('cmt-input-field').value = '';
+    if (currentUser) document.getElementById('cmt-current-avatar').src = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.full_name}&background=0d631b&color=fff`;
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    const list = document.getElementById('cmt-modal-list');
+    list.innerHTML = `<div class="text-center py-10 text-on-surface-variant"><div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-3"></div><br>Đang tải...</div>`;
+
+    setTimeout(() => {
+        // MOCK COMMENTS
+        const mockComments = [
+            {
+                content: "Bài viết rất hữu ích, cảm ơn bạn đã chia sẻ!",
+                created_at: new Date().toISOString(),
+                profiles: { full_name: "Nguyễn Văn A", avatar_url: "https://i.pravatar.cc/150?u=a" }
+            },
+            {
+                content: "Mình cũng đang gặp tình trạng tương tự ở vườn nhà mình.",
+                created_at: new Date().toISOString(),
+                profiles: { full_name: "Trần Thị B", avatar_url: "https://i.pravatar.cc/150?u=b" }
+            }
+        ];
+
+        list.innerHTML = mockComments.map(cmt => {
+            const ava = cmt.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${cmt.profiles?.full_name || 'U'}&background=0d631b&color=fff`;
+            const name = cmt.profiles?.full_name || 'Người dùng';
+            return `
+                <div class="flex gap-3 mb-2 animate-fade-in-up">
+                    <img src="${ava}" class="w-9 h-9 rounded-full object-cover">
+                    <div class="bg-surface-container-low p-3 rounded-2xl rounded-tl-none border border-outline-variant/30">
+                        <div class="font-bold text-[13px] text-on-surface">${name}</div>
+                        <div class="text-[14px] text-on-surface-variant">${cmt.content}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        list.scrollTop = list.scrollHeight;
+    }, 500);
+};
+
+window.submitModalComment = async function () {
+    if (!currentUser) return showToast("Vui lòng đăng nhập để bình luận!", "warning");
+
+    const input = document.getElementById('cmt-input-field');
+    const postId = document.getElementById('cmt-modal-target-id').value;
+    const text = input.value.trim();
+    if (!text || !postId) return;
+
+    input.disabled = true;
+
+    setTimeout(() => {
+        // Cập nhật số đếm ở bài viết bên ngoài Bảng tin
+        const countEl = document.getElementById(`comment-count-${postId}`);
+        if (countEl) {
+            const curCount = parseInt(countEl.innerText) || 0;
+            countEl.innerText = `${curCount + 1} Bình luận`;
+        }
+
+        // Vẽ bình luận mới vừa đăng vào cuối danh sách Modal
+        const list = document.getElementById('cmt-modal-list');
+        const ava = currentUser.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.full_name}&background=0d631b&color=fff`;
+        const name = currentUser.full_name || 'Bạn';
+
+        // Xóa thông báo "Hãy là người đầu tiên" nếu có
+        if (list.innerHTML.includes('người đầu tiên')) list.innerHTML = '';
+
+        list.insertAdjacentHTML('beforeend', `
+            <div class="flex gap-3 mb-2 animate-fade-in-up">
+                <img src="${ava}" class="w-9 h-9 rounded-full object-cover border border-primary/20">
+                <div class="bg-primary/10 p-3 rounded-2xl rounded-tr-none">
+                    <div class="font-bold text-[13px] text-primary">${name}</div>
+                    <div class="text-[14px] text-on-surface">${text}</div>
+                </div>
+            </div>
+        `);
+
+        list.scrollTop = list.scrollHeight;
+        input.value = '';
+        showToast("Đã đăng bình luận!", "success");
+        input.disabled = false;
+        input.focus();
+    }, 300);
+};
+
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
 window.copyShareLink = function () {
     showToast("Đã sao chép liên kết bài viết!", "success");
 };
@@ -7539,9 +7707,19 @@ window.openAllExpertsModal = async function () {
             return;
         }
 
+<<<<<<< HEAD
         const resExp = await fetch('/api/experts/top');
         const expData = await resExp.json();
         const experts = expData.data || [];
+=======
+        const { data: experts, error } = await window.supabaseClient
+            .from('profiles')
+            .select('id, full_name, avatar_url, role, username')
+            .eq('role', 'expert')
+            .order('full_name', { ascending: true });
+
+        if (error) throw error;
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
 
         _allExpertsData = experts || [];
         _renderAllExperts(_allExpertsData);
@@ -7591,6 +7769,7 @@ function _renderAllExperts(experts) {
         card += '<h3 class="font-label-lg text-label-lg text-on-background truncate">' + displayName + '</h3>';
         card += '<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings:\'FILL\' 1;">verified</span>';
         card += '</div>';
+<<<<<<< HEAD
         card += '<p class="font-body-md text-body-md text-on-surface-variant truncate mb-1 hidden">@' + username + '</p>';
         
         if (exp.rating > 0) {
@@ -7604,6 +7783,10 @@ function _renderAllExperts(experts) {
         }
 
         card += '<span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary-container text-on-primary-container">Chuyên gia</span>';
+=======
+        card += '<p class="font-body-md text-body-md text-on-surface-variant truncate">@' + username + '</p>';
+        card += '<span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary-container text-on-primary-container">Chuyên gia</span>';
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
         card += '</div></div>';
 
         // Specialty info
@@ -9242,6 +9425,7 @@ window.showExpertConsultationDetail = async function (reqId) {
                 }
             }
 
+<<<<<<< HEAD
             let isOwner = false;
             try {
                 const userStr = localStorage.getItem('agrisocial_user');
@@ -9251,6 +9435,8 @@ window.showExpertConsultationDetail = async function (reqId) {
                 }
             } catch (e) {}
 
+=======
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
             answerContainer.innerHTML = `
                 <div class="bg-primary/5 border border-primary/10 rounded-2xl p-5 space-y-4">
                     <div class="flex items-center gap-3">
@@ -9280,7 +9466,10 @@ window.showExpertConsultationDetail = async function (reqId) {
                         </div>
                         ` : ''}
                         
+<<<<<<< HEAD
                         ${isOwner ? `
+=======
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                         <!-- Rating System -->
                         <div class="mt-4 pt-4 border-t border-primary/10 flex flex-col items-center">
                             <p class="text-xs font-bold text-on-surface-variant mb-2">Bạn đánh giá phản hồi này thế nào?</p>
@@ -9298,9 +9487,13 @@ window.showExpertConsultationDetail = async function (reqId) {
                             </div>
                             ${resp.rating ? `<p class="text-[10px] text-emerald-600 font-bold mt-1">Cảm ơn bạn đã đánh giá!</p>` : ''}
                         </div>
+<<<<<<< HEAD
                         ` : ''}
                     </div>
 
+=======
+                    </div>
+>>>>>>> 3f515203aca5266db896be604e6201162c6b8dd4
                 </div>
             `;
         } else {
